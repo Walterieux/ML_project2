@@ -41,45 +41,71 @@ def extract_labels(label_path):
     return np.asarray(imgs)
 
 
-data_dir = '../data/'
-train_data_filename = data_dir + 'training/images/'
-train_labels_filename = data_dir + 'training/groundtruth/'
+def create_mini_patches(data, patch_shape):
+    """separate image into patches, data is a collection of images"""
+    imgs = []
+    for i in range(data.shape[0]):
+        from patchify import patchify
+        if len(patch_shape) == 3:
+            imgs.append(patchify(data[i], patch_shape, step=patch_shape[0]).reshape(
+                (-1, patch_shape[0], patch_shape[1], patch_shape[2])))
+        else:
+            imgs.append(patchify(data[i], patch_shape, step=patch_shape[0]).reshape(
+                (-1, patch_shape[0], patch_shape[1])))
+    return np.asarray(imgs)
 
-images = extract_image(train_data_filename)
+def main():
+    install("patchify")
+    img_patch_size = 100
 
-labels = extract_labels(train_labels_filename)
-labels = labels.reshape(labels.shape[0], -1)
+    data_dir = '../data/'
+    train_data_filename = data_dir + 'training/images/'
+    train_labels_filename = data_dir + 'training/groundtruth/'
 
-train_images = images[:90]
-test_images = images[90:]
+    images = extract_image(train_data_filename)
+    images = create_mini_patches(images, (img_patch_size, img_patch_size, 3))
+    images = images.reshape((-1, img_patch_size, img_patch_size, 3))
+    print(images.shape)
 
-train_labels = labels[:90]
-test_labels = labels[90:]
+    labels = extract_labels(train_labels_filename)
+    print(labels.shape)
+    labels = create_mini_patches(labels, (img_patch_size, img_patch_size))
+    labels = labels.reshape((-1, img_patch_size, img_patch_size))
+    labels = labels.reshape(labels.shape[0], -1)
 
-model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(400, 400, 3)))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='sigmoid'))
+    train_images = images[:90]
+    test_images = images[90:]
 
-model.summary()
+    train_labels = labels[:90]
+    test_labels = labels[90:]
 
-model.add(layers.Flatten())
-model.add(layers.Dense(64, activation='hard_sigmoid'))
-model.add(layers.Dense(160000))
+    model = models.Sequential()
+    model.add(layers.Conv2D(32, (3, 3), activation='sigmoid', input_shape=(img_patch_size, img_patch_size, 3)))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3), activation='sigmoid'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3), activation='sigmoid'))
 
-model.summary()
+    model.summary()
 
-model.compile(optimizer='adam',
-              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-              metrics=['binary_accuracy'])
+    model.add(layers.Flatten())
+    model.add(layers.Dense(64, activation='sigmoid'))
+    model.add(layers.Dense(img_patch_size ** 2))
 
-history = model.fit(train_images, train_labels, epochs=4,
-                    validation_data=(test_images, test_labels))
+    model.summary()
 
-test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
-print("Accuracy = ", test_acc)
+    model.compile(optimizer='sgd',
+                  loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                  metrics=['binary_accuracy'])
 
-# acc = history.history['accuracy']
-# print(acc)
+    history = model.fit(train_images, train_labels, epochs=5,
+                        validation_data=(test_images, test_labels))
+
+    test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
+    print("Accuracy = ", test_acc)
+
+    # acc = history.history['accuracy']
+    # print(acc)
+
+if __name__ == '__main__':
+    main()
