@@ -66,7 +66,7 @@ model.add(layers.Conv2D(64, (3, 3), activation='sigmoid'))
 model.summary()
 
 model.add(layers.Flatten())
-model.add(layers.Dense(64, activation='hard_sigmoid'))  # Change softmax
+model.add(layers.Dense(64, activation='hard_sigmoid'))
 model.add(layers.Dense(160000))
 
 model.summary()
@@ -75,7 +75,7 @@ model.compile(optimizer='adam',
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=['binary_accuracy'])
 
-history = model.fit(train_images, train_labels, epochs=2,
+history = model.fit(train_images, train_labels, epochs=4,
                     validation_data=(test_images, test_labels))
 
 test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
