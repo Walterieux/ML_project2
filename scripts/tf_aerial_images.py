@@ -289,6 +289,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Make an image summary for 3d tensor image with index idx
     def get_image_summary_3d(img):
         V = tf.slice(img, (0, 0, 0), (1, -1, -1))
+        #we only take first row of img => [0:1,:,:] c'est ça le truc du dessus au final
         img_w = img.get_shape().as_list()[1]
         img_h = img.get_shape().as_list()[2]
         V = tf.reshape(V, (img_w, img_h, 1))
@@ -386,6 +387,9 @@ def main(argv=None):  # pylint: disable=unused-argument
             summary_id = '_0'
             s_data = get_image_summary(data)
             tf.summary.image('summary_data' + summary_id, s_data, max_outputs=3)
+            #summary.image(name,data,max_outputs)
+            #name : name for this summary, data pixel data 
+            #with shape [k,h,w,c] ou k c'est le nombre d'images
             s_conv = get_image_summary(conv)
             tf.summary.image('summary_conv' + summary_id, s_conv, max_outputs=3)
             s_pool = get_image_summary(pool)
