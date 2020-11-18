@@ -25,7 +25,7 @@ def extract_image(image_path):
     imgs = []
     for img_path in glob.glob(image_path + "/*.png"):
         img = imageio.imread(img_path)
-        img = img / 255
+        img = img / 255.0
         imgs.append(img)
 
     return np.asarray(imgs)
@@ -74,31 +74,37 @@ def main():
     labels = labels.reshape((-1, img_patch_size, img_patch_size))
     labels = labels.reshape(labels.shape[0], -1)
 
+
     # Split data
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.1)
 
     model = models.Sequential()
-    model.add(layers.Conv2D(32, kernel_size=(3, 3),  activation='sigmoid', input_shape=(img_patch_size, img_patch_size, 3)))
+    model.add(layers.Conv2D(32, kernel_size=(3, 3),  activation='linear', input_shape=(img_patch_size, img_patch_size, 3)))
     model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='sigmoid'))
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='linear'))
     model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='sigmoid'))
-
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='linear'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='linear'))
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='sigmoid'))
     model.add(layers.Dense(img_patch_size ** 2))
 
     model.summary()
 
-    model.compile(optimizer='sgd',
+    model.compile(optimizer='ftrl',
                   loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                  metrics=['binary_accuracy'])
+                  metrics=[tf.keras.metrics.BinaryAccuracy()])
 
-    history = model.fit(train_images, train_labels, epochs=2,
-                        validation_data=(test_images, test_labels))
+    history = model.fit(train_images, train_labels, epochs=4)
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
     print("Accuracy = ", test_acc)
+
+    # prediction test
+    # print(test_images[0:1, :, :, :].shape)
+    # img = Image.fromarray(model.predict(test_images[0:1, :, :, :]).reshape((100, 100)))
+    # img.show()
 
     # acc = history.history['accuracy']
     # print(acc)
