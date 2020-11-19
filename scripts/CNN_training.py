@@ -10,7 +10,7 @@ from PIL import Image
 from patchify import patchify, unpatchify
 from sklearn.model_selection import train_test_split
 
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import layers, models
 
 
 def install(package):
@@ -83,11 +83,11 @@ def main():
     train_labels = create_mini_patches(train_labels, (img_patch_size, img_patch_size))
     test_labels = create_mini_patches(test_labels, (img_patch_size, img_patch_size))
 
-    # Test: retrieve original train labels (before create_mini_patches)
-    test_labels_original = test_labels.reshape((-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size), img_patch_size, img_patch_size))
+    # Test: retrieve original train labels using unpatchify
+    test_labels_original = test_labels.reshape(
+        (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
     print("test lab origi: ", test_labels_original.shape)
     test_labels_original_image0 = unpatchify(test_labels_original[0], img_shape)
-
 
     # CNN
     model = models.Sequential()
@@ -107,7 +107,7 @@ def main():
                   loss='mse',
                   metrics='accuracy')
 
-    history = model.fit(train_images, train_labels, epochs=1)
+    model.fit(train_images, train_labels, epochs=10)
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
     print("Accuracy = ", test_acc)
@@ -115,24 +115,19 @@ def main():
     # prediction
     prediction = model.predict(test_images)
 
-    # TODO do this for each images
-    prediction_reshaped = prediction.reshape((-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size), img_patch_size, img_patch_size))
+    # show expected and predicted image
+    prediction_reshaped = prediction.reshape(
+        (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
     prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
-
-    #threshold = 0.5
-    #prediction_reshaped[prediction_reshaped > threshold] = 1
-    #prediction_reshaped[prediction_reshaped <= threshold] = 0
-    comparator = np.concatenate(((test_labels_original_image0*255).astype('uint8'), (prediction_reshaped*255).astype('uint8')), axis=1)
+    comparator = np.concatenate(
+        ((test_labels_original_image0 * 255).astype('uint8'), (prediction_reshaped * 255).astype('uint8')), axis=1)
     img = Image.fromarray(comparator)
     img.show()
-
 
     # Testing
     tot_black_pixels = np.sum(test_labels < 0.5)
     tot_pixels = test_labels.shape[0] * test_labels.shape[1]
     print(tot_black_pixels / tot_pixels * 100, "% of black pixels")
-
-
 
     """
     threshold = 0.5
@@ -141,9 +136,6 @@ def main():
     img = Image.fromarray(result * 255, 'L')
     img.show()
     """
-
-    # acc = history.history['accuracy']
-    # print(acc)
 
 
 if __name__ == '__main__':
