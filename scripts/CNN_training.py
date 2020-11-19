@@ -89,6 +89,7 @@ def main():
     test_labels_original_image0 = unpatchify(test_labels_original[0], img_shape)
 
 
+    # CNN
     model = models.Sequential()
     model.add(
         layers.Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(img_patch_size, img_patch_size, 3)))
@@ -118,10 +119,10 @@ def main():
     prediction_reshaped = prediction.reshape((-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size), img_patch_size, img_patch_size))
     prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
 
-    threshold = 0.5
-    prediction_reshaped[prediction_reshaped > threshold] = 1
-    prediction_reshaped[prediction_reshaped <= threshold] = 0
-    comparator = np.concatenate((test_labels_original_image0, prediction_reshaped), axis=1)
+    #threshold = 0.5
+    #prediction_reshaped[prediction_reshaped > threshold] = 1
+    #prediction_reshaped[prediction_reshaped <= threshold] = 0
+    comparator = np.concatenate(((test_labels_original_image0*255).astype('uint8'), (prediction_reshaped*255).astype('uint8')), axis=1)
     img = Image.fromarray(comparator)
     img.show()
 
