@@ -64,6 +64,7 @@ def create_mini_patches(data, patch_shape):
 def main():
     install("patchify")
     img_patch_size = 20
+    img_shape = (400, 400)
 
     data_dir = '../data/'
     train_data_filename = data_dir + 'training/images/'
@@ -81,6 +82,12 @@ def main():
     test_images = create_mini_patches(test_images, (img_patch_size, img_patch_size, 3))
     train_labels = create_mini_patches(train_labels, (img_patch_size, img_patch_size))
     test_labels = create_mini_patches(test_labels, (img_patch_size, img_patch_size))
+
+    # Test: retrieve original train labels (before create_mini_patches)
+    test_labels_original = test_labels.reshape((-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size), img_patch_size, img_patch_size))
+    print("test lab origi: ", test_labels_original.shape)
+    test_labels_original_image0 = unpatchify(test_labels_original[0], img_shape)
+
 
     model = models.Sequential()
     model.add(
@@ -106,16 +113,24 @@ def main():
 
     # prediction
     prediction = model.predict(test_images)
-    print(prediction.shape)
-    # prediction_reshaped = unpatchify(prediction.reshape((-1, 400, img_patch_size, img_patch_size)), (400, 400))
+
+    # TODO do this for each images
+    prediction_reshaped = prediction.reshape((-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size), img_patch_size, img_patch_size))
+    prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
+
+    threshold = 0.5
+    prediction_reshaped[prediction_reshaped > threshold] = 1
+    prediction_reshaped[prediction_reshaped <= threshold] = 0
+    comparator = np.concatenate((test_labels_original_image0, prediction_reshaped), axis=1)
+    img = Image.fromarray(comparator)
+    img.show()
+
 
     # Testing
     tot_black_pixels = np.sum(test_labels < 0.5)
     tot_pixels = test_labels.shape[0] * test_labels.shape[1]
     print(tot_black_pixels / tot_pixels * 100, "% of black pixels")
 
-    # result = model.predict(test_images[0:1, :, :, :]).reshape((img_patch_size, img_patch_size))
-    # print("mean: ", np.mean(result), " min: ", np.min(result), " max: ", np.max(result))
 
 
     """
