@@ -47,12 +47,17 @@ def create_mini_patches(data, patch_shape):
     """separate image into patches, data is a collection of images"""
     imgs = []
     for i in range(data.shape[0]):
-        if len(patch_shape) == 3:
-            imgs.append(patchify(data[i], patch_shape, step=patch_shape[0]).reshape(
-                (-1, patch_shape[0], patch_shape[1], patch_shape[2])))
+        if len(patch_shape) == 3:  # RGB images
+            patches = patchify(data[i], patch_shape, step=patch_shape[0])
+            patches = patches.reshape((-1, patch_shape[0], patch_shape[1], patch_shape[2]))
+            imgs.extend(patches)
         else:
-            imgs.append(patchify(data[i], patch_shape, step=patch_shape[0]).reshape(
-                (-1, patch_shape[0], patch_shape[1])))
+            patches = patchify(data[i], patch_shape, step=patch_shape[0])
+            patches = patches.reshape((-1, patch_shape[0], patch_shape[1]))
+            number_of_patches = patches.shape[0]
+            patches = patches.reshape((number_of_patches, -1))
+            imgs.extend(patches)
+
     return np.asarray(imgs)
 
 
@@ -66,19 +71,16 @@ def main():
 
     # Retrieve images/groundtruth and create mini patches
     images = extract_image(train_data_filename)
-    images = create_mini_patches(images, (img_patch_size, img_patch_size, 3))
-    images = images.reshape((-1, img_patch_size, img_patch_size, 3))
-
     labels = extract_labels(train_labels_filename)
-    labels = create_mini_patches(labels, (img_patch_size, img_patch_size))
-    labels_shape = labels.shape
-    labels = labels.reshape((-1, img_patch_size, img_patch_size))
-    labels = labels.reshape(labels.shape[0], -1)
-
-    # TODO call create mini patches after train_test_split if we want to avoid mixing up the patches
 
     # Split data
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.1)
+
+    # create mini_patches
+    train_images = create_mini_patches(train_images, (img_patch_size, img_patch_size, 3))
+    test_images = create_mini_patches(test_images, (img_patch_size, img_patch_size, 3))
+    train_labels = create_mini_patches(train_labels, (img_patch_size, img_patch_size))
+    test_labels = create_mini_patches(test_labels, (img_patch_size, img_patch_size))
 
     model = models.Sequential()
     model.add(
@@ -105,16 +107,16 @@ def main():
     # prediction
     prediction = model.predict(test_images)
     print(prediction.shape)
-    #prediction_reshaped = unpatchify(prediction.reshape((-1, 400, img_patch_size, img_patch_size)), (400, 400))
+    # prediction_reshaped = unpatchify(prediction.reshape((-1, 400, img_patch_size, img_patch_size)), (400, 400))
 
     # Testing
-    """
     tot_black_pixels = np.sum(test_labels < 0.5)
     tot_pixels = test_labels.shape[0] * test_labels.shape[1]
     print(tot_black_pixels / tot_pixels * 100, "% of black pixels")
-    result = model.predict(test_images[0:1, :, :, :]).reshape((img_patch_size, img_patch_size))
-    print("mean: ", np.mean(result), " min: ", np.min(result), " max: ", np.max(result))
-    """
+
+    # result = model.predict(test_images[0:1, :, :, :]).reshape((img_patch_size, img_patch_size))
+    # print("mean: ", np.mean(result), " min: ", np.min(result), " max: ", np.max(result))
+
 
     """
     threshold = 0.5
