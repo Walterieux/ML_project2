@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 import tensorflow as tf
+import ipykernel
 import imageio
 import glob
 from PIL import Image
@@ -12,12 +13,17 @@ from sklearn.model_selection import train_test_split
 
 from tensorflow.keras import layers, models
 
+config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
+config.gpu_options.allow_growth = True
+session = tf.compat.v1.Session(config=config)
+tf.compat.v1.keras.backend.set_session(session)
+
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 
-def extract_image(image_path):
+def extract_images(image_path):
     """
     Extract all images from 'image_path'
     All values are between 0 and 1
@@ -43,7 +49,7 @@ def extract_labels(label_path):
     return np.asarray(imgs)
 
 
-def create_mini_patches(data, patch_shape):
+def create_patches(data, patch_shape):
     """separate image into patches, data is a collection of images"""
     imgs = []
     for i in range(data.shape[0]):
@@ -71,17 +77,17 @@ def main():
     train_labels_filename = data_dir + 'training/groundtruth/'
 
     # Retrieve images/groundtruth and create mini patches
-    images = extract_image(train_data_filename)
+    images = extract_images(train_data_filename)
     labels = extract_labels(train_labels_filename)
 
     # Split data
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.1)
 
     # create mini_patches
-    train_images = create_mini_patches(train_images, (img_patch_size, img_patch_size, 3))
-    test_images = create_mini_patches(test_images, (img_patch_size, img_patch_size, 3))
-    train_labels = create_mini_patches(train_labels, (img_patch_size, img_patch_size))
-    test_labels = create_mini_patches(test_labels, (img_patch_size, img_patch_size))
+    train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
+    test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
+    train_labels = create_patches(train_labels, (img_patch_size, img_patch_size))
+    test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
 
     # Test: retrieve original train labels using unpatchify
     test_labels_original = test_labels.reshape(
@@ -105,9 +111,9 @@ def main():
 
     model.compile(optimizer='adam',
                   loss='mse',
-                  metrics='accuracy')
+                  metrics=['accuracy'])
 
-    model.fit(train_images, train_labels, epochs=10)
+    model.fit(train_images, train_labels, epochs=2)
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
     print("Accuracy = ", test_acc)
