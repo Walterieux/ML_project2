@@ -14,7 +14,7 @@ from PIL import Image
 import os
 def read_images(filename, num_images):
     """Extract the images into a 4D tensor [image index, y, x, channels].
-    Values are rescaled from [0, 255] down to [-0.5, 0.5].
+    Values are rescaled from [0, 255].
     """
     imgs = []
     for i in range(1, num_images + 1):
@@ -78,13 +78,13 @@ train_data_filename_edges_rotated = data_dir + 'training/images_edges_rotated/'
 
 
 data = read_images(train_data_filename, TRAINING_SIZE)
-rotate_images(train_data_filename_rotated,data)
-data_rotated = read_images(train_data_filename_rotated,300)
+#rotate_images(train_data_filename_rotated,data)
+data_rotated = read_images(train_data_filename_rotated,799)
 
-data_groundtruh = read_images(train_labels_filename,TRAINING_SIZE)
-rotate_images(train_data_filename_rotated_groundtruth,data_groundtruh)
+#data_groundtruh = read_images(train_labels_filename,TRAINING_SIZE)
+#rotate_images(train_data_filename_rotated_groundtruth,data_groundtruh)
 
-rotate_images(train_data_filename_rotated,data)
+#rotate_images(train_data_filename_rotated,data)
 
 edges_images(train_data_filename_edges,data)
 edges_images(train_data_filename_edges_rotated,data_rotated)
