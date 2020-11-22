@@ -12,57 +12,59 @@ import numpy as np
 from scipy.ndimage import filters,zoom
 from PIL import Image 
 import os
+import imageio
+""" @input: filename: name of the folder where the images are stored 
+            num_images: number of images stored in the folder 
+    @output: list of images stored in the folder
+"""
 def read_images(filename, num_images):
-    """Extract the images into a 4D tensor [image index, y, x, channels].
-    Values are rescaled from [0, 255].
-    """
     imgs = []
     for i in range(1, num_images + 1):
         imageid = "satImage_%.3d" % i
         image_filename = filename + imageid + ".png"
         if os.path.isfile(image_filename):
-            print('Loading ' + image_filename)
             img = Image.open(image_filename)
-            img = scipy.misc.imread(image_filename)
             imgs.append(img)
     return imgs
+
+
+""" @input: filename: name of the folder where the images will bestored 
+            data_images: list of images that will be rotated of [45,90,135..] degrees 
+    @output: images rotated stored in the folder
+"""
 def rotate_images(filename,data_images): 
     number=0
     for i,image in enumerate(data_images):
         for j in range(8):
-            rotate_img_1=rotate(image,(j+1)*45)
-            #rotate_img_1 = image.rotate( (j+1)*45)
-            #if ((j+1)*45) % 90 != 0 :
-                #height=400
-                #print(np.shape(rotate_img_1))
-                #left = 4
-                #top = height / 5
-                #right = 154
-                #bottom = 3 * height / 5
-  
-# Cropped image of above dimension  
-# (It will not change orginal image)  
-                #rotate_img_1 = rotate_img_1.crop((left, top, right, bottom)) 
-                #newsize = (400, 400) 
-                #rotate_img_1 = rotate_img_1.resize(newsize) 
-                #print("after" ,np.shape(rotate_img_1))
-            save_img(filename,rotate_img_1,number+j)
+            rotate_img=image.rotate((j+1)*45)
+            if ((j+1)*45) % 90 != 0 :
+                rotate_img = rotate_img.crop((60, 60, 340, 340)) 
+                rotate_img = rotate_img.resize((400, 400)) 
+            save_img(filename,rotate_img,number+j+1)
         number+=8
-
+""" @input: filename: name of the folder where the images will bestored 
+            data_images: list of images that we will get the edges
+    @output: images edges in the folder
+"""
 def edges_images(filename,data_images):
     for j,image in enumerate(data_images):
+        image=np.array( image, dtype='uint32' )
         imx = np.zeros(image.shape)
         imy = np.zeros(image.shape)
         filters.sobel(image,1,imx,cval=0.0)  # axis 1 is x
         filters.sobel(image,0,imy, cval=0.0) # axis 0 is y
         magnitude = np.sqrt(imx**2+imy**2)
-        save_img(filename,np.where(magnitude>=0.16*np.max(magnitude),255,0),j)
+        save_img(filename,np.where(magnitude>=0.16*np.max(magnitude),255,0),j+1)
         
-
+""" @input: filename: name of the folder where the images will bestored 
+            image: image that will be stored (array)
+            number: the image will be stored with filename  filename + imageid + ".png"
+    @output: image  in the folder
+"""
 def save_img(filename,image,number):
     imageid = "satImage_%.3d" % number
     image_filename = filename + imageid + ".png"
-    scipy.misc.imsave(image_filename, image)
+    imageio.imwrite(image_filename, image)
 
 
 data_dir = '../data/'
@@ -79,12 +81,11 @@ train_data_filename_edges_rotated = data_dir + 'training/images_edges_rotated/'
 
 data = read_images(train_data_filename, TRAINING_SIZE)
 #rotate_images(train_data_filename_rotated,data)
-data_rotated = read_images(train_data_filename_rotated,799)
+data_rotated = read_images(train_data_filename_rotated,800)
 
-#data_groundtruh = read_images(train_labels_filename,TRAINING_SIZE)
-#rotate_images(train_data_filename_rotated_groundtruth,data_groundtruh)
+data_groundtruh = read_images(train_labels_filename,TRAINING_SIZE)
 
-#rotate_images(train_data_filename_rotated,data)
+rotate_images(train_data_filename_rotated_groundtruth,data_groundtruh)
 
 edges_images(train_data_filename_edges,data)
 edges_images(train_data_filename_edges_rotated,data_rotated)
