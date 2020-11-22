@@ -44,6 +44,9 @@ def extract_labels(label_path):
     imgs = []
     for img_path in glob.glob(label_path + "/*.png"):
         img = imageio.imread(img_path)
+        # Formalize labels
+        img[img <= 127] = 0
+        img[img > 127] = 1
         imgs.append(img)
 
     return np.asarray(imgs)
@@ -69,7 +72,7 @@ def create_patches(data, patch_shape):
 
 def main():
     install("patchify")
-    img_patch_size = 20
+    img_patch_size = 25
     img_shape = (400, 400)
 
     data_dir = '../data/'
@@ -104,16 +107,16 @@ def main():
     model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu'))
 
     model.add(layers.Flatten())
-    model.add(layers.Dense(256, activation='relu'))
+    model.add(layers.Dense(512, activation='relu'))
     model.add(layers.Dense(img_patch_size ** 2, activation='sigmoid'))
 
     model.summary()
 
     model.compile(optimizer='adam',
-                  loss='mse',
-                  metrics=['accuracy'])
+                  loss='binary_crossentropy',
+                  metrics=['binary_accuracy'])
 
-    model.fit(train_images, train_labels, epochs=2)
+    model.fit(train_images, train_labels, epochs=10)
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
     print("Accuracy = ", test_acc)
