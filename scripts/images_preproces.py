@@ -32,15 +32,13 @@ def rotate_images(filename,data_images):
             data_images: list of images that will be rotated of [45,90,135..,360] degrees 
     @output: images rotated stored in the folder
 """
-    number=0
     for i,image in enumerate(data_images):
         for j in range(8):
             rotate_img=image.rotate((j+1)*45)
             if ((j+1)*45) % 90 != 0 :
                 rotate_img = rotate_img.crop((60, 60, 340, 340)) 
                 rotate_img = rotate_img.resize((400, 400)) 
-            save_img(filename,rotate_img,number+j+1)
-        number+=8
+            save_img(filename,rotate_img,i*8+j+1)
 def edges_images(filename,data_images):
     """ @input: filename: name of the folder where the images will bestored 
             data_images: list of images that we will get the edges
@@ -48,9 +46,9 @@ def edges_images(filename,data_images):
 """
 
     for j,image in enumerate(data_images):
-        image=np.array( image, dtype='uint32' )
-        filters.sobel(image,1,imx,cval=0.0)  # axis 1 is x
-        filters.sobel(image,0,imy, cval=0.0) # axis 0 is y
+        image = np.array( image, dtype='uint32' )
+        imx = filters.sobel(image,1,cval=0.0)  # axis 1 is x
+        imy = filters.sobel(image,0, cval=0.0) # axis 0 is y
         magnitude = np.sqrt(imx**2+imy**2)
         save_img(filename,np.where(magnitude>=0.16*np.max(magnitude),255,0),j+1)
         
