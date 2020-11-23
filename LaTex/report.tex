@@ -37,7 +37,7 @@
 \label{sec:dataset}
 The data set we are given to train a model on consists of $100$ satellite images from Google Maps. The pictures look like they were all taken from a very similar locations, probably one single city. As such, the given data set is not very diverse. Furthermore, it is quite limited in size. This explains why we need to enlarge our data set. Note that our training set is a fraction of the same Google Maps satellite images. Thus, we expect that our road classifier can be trained to perform well for segmenting roads of that particular city or similar cities. Its performance when applied to radically different roads and areas can however not be certified.
 
-In section \ref{ssec:data_proc} we describe how the data set was enlarged and how we managed to run train CNN on a substantial amount of images, so as to yield proper results.
+In section \ref{ssec:data_proc} we describe how the data set was enlarged and how we managed to train our CNN on a substantial amount of images, so as to yield proper results.
 
 
 \section{Models and Methods}
@@ -63,6 +63,16 @@ In section \ref{ssec:data_proc} we describe how the data set was enlarged and ho
 
 \subsection{Creating a Large Data Set} 
 \label{ssec:data_proc}
+
+We used a variety of methods and combined them in order to have a lot of data available to train our CNN. 
+
+Firstly, although we only have 100 images at our disposal for training, we actually train on smaller images that are subsets of the given images. For example, we can choose to train on images of size $20 \times 20$ pixels. This means that we get $400$ training input sets for one single image (the given images have size $400 \times 400$). We are effectively partitioning large images into many small images, which has the added benefit of reducing the parameter count of our CNN.
+
+Another common way to enlarge ou data set we used is to apply various transformations on the original images. By rotating, cropping and flipping the large scale images, we can obtain many variations of that image which prove very useful for training. Note that in this process we might lose image resolution, for example if we rotate and then crop. However that loss of resolution is effectively a zoom, another transformation. Any additional transformed images can only increase the sturdiness of our trained model. 
+% TODO : which library for transformations?
+
+We explored further ways of increasing the amount of input data we can feed to our CNN. One way to attain this is to give as input the edges found in an image along with the pixels of that image. We simply process the image with a Canny edge detector. This yields a gray-scale image indicating where edges are to be found. We do not extract vectors from the resulting gray-scale picture, but only give the latter's pixels as an additional input to our CNN.
+% TODO : which library for canny?
 
 
 \subsection{Evolution of our CNN} 
