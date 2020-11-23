@@ -76,12 +76,14 @@ def main():
     img_shape = (400, 400)
 
     data_dir = '../data/'
-    train_data_filename = data_dir + 'training/images/'
-    train_labels_filename = data_dir + 'training/groundtruth/'
+    train_data_filename = data_dir + 'training/images_rotated/'
+    train_labels_filename = data_dir + 'training/images_rotated_groundtruth/'
 
     # Retrieve images/groundtruth and create mini patches
     images = extract_images(train_data_filename)
     labels = extract_labels(train_labels_filename)
+    print("images shape: ", images.shape)
+    print("labels shape: ", labels.shape)
 
     # Split data
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.1)
