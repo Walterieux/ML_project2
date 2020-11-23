@@ -386,6 +386,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             summary_id = '_0'
             s_data = get_image_summary(data)
             tf.summary.image('summary_data' + summary_id, s_data, max_outputs=3)
+            
             s_conv = get_image_summary(conv)
             tf.summary.image('summary_conv' + summary_id, s_conv, max_outputs=3)
             s_pool = get_image_summary(pool)
