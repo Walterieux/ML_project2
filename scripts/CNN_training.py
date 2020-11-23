@@ -72,7 +72,7 @@ def create_patches(data, patch_shape):
 
 def main():
     install("patchify")
-    img_patch_size = 25
+    img_patch_size = 16
     img_shape = (400, 400)
 
     data_dir = '../data/'
@@ -116,7 +116,7 @@ def main():
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy'])
 
-    model.fit(train_images, train_labels, epochs=10)
+    model.fit(train_images, train_labels, epochs=7)
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
     print("Accuracy = ", test_acc)
