@@ -32,11 +32,11 @@ The following dependencies need to be installed before you can run
 the project. Next to them are the anaconda prompt commands needed to 
 install them on your anaconda environment: 
 
-* ipykernel : `pip install ipykernel`
+* ipykernel : `conda install -c anaconda ipykernel`
 * patchify : `pip install patchify`
-* imageio : `pip install imageio`
+* imageio : `conda install -c anaconda imageio`
 * glob : `pip install glob`
-* pillow : `conda install pillow`
+* pillow : `conda install -c anaconda pillow`
 
 Note that pip (or pip3) is required to install some dependecies.
 
