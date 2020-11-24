@@ -13,6 +13,7 @@ from patchify import patchify, unpatchify
 from sklearn.model_selection import train_test_split
 
 from tensorflow.keras import layers, models
+from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -85,7 +86,7 @@ def characterise_each_patch_as_road_or_not(labels):
 
 def main():
     install("patchify")
-    img_patch_size = 16
+    img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
     img_shape = (400, 400)
 
     data_dir = '../data/'
@@ -121,15 +122,21 @@ def main():
     # CNN
     if need_to_train:
         model = models.Sequential()
+
+        # Taken from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
         model.add(
-            layers.Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(img_patch_size, img_patch_size, 3)))
+            layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same', input_shape=(img_patch_size, img_patch_size, 3)))
         model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
-        model.add(layers.MaxPooling2D((2, 2)))
+        model.add(layers.MaxPool2D((2, 2)))
+        model.add(Dropout(0.20))  # Avoid overfitting
+
+        model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'))
         model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        model.add(layers.MaxPool2D((2, 2)))
+        model.add(Dropout(0.20))
 
         model.add(layers.Flatten())
-        model.add(layers.Dense(128, activation='relu'))
-        # model.add(layers.Dense(img_patch_size ** 2, activation='sigmoid'))
+        model.add(layers.Dense(1024, activation='relu'))
         model.add(layers.Dense(1, activation='sigmoid'))
 
         model.summary()
@@ -138,7 +145,7 @@ def main():
                       loss='binary_crossentropy',
                       metrics=['binary_accuracy'])
 
-        model.fit(train_images, train_labels, epochs=5)
+        model.fit(train_images, train_labels, epochs=10)
 
         model.save("saved_model")
     else:
@@ -149,16 +156,20 @@ def main():
 
     # prediction
     prediction = model.predict(test_images)
+    # prediction[prediction < 0.5] = 0
+    # prediction[prediction >= 0.5] = 1
 
     # show expected and predicted image
     #prediction_reshaped = prediction.reshape(
     #    (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
     #prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
+
     prediction_reshaped = prediction.reshape(-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size))
     print("test_labels_original_image0: ", test_labels_original_image0.shape)
     print("prediction_reshaped: ", prediction_reshaped.shape)
+    prediction_reshaped = prediction_reshaped[0].repeat(img_patch_size, axis=0).repeat(img_patch_size, axis=1)
     comparator = np.concatenate(
-        ((test_labels_original_image0 * 255).astype('uint8'), (prediction_reshaped[0].repeat(16, axis=0).repeat(16, axis=1) * 255).astype('uint8')), axis=1)
+        ((test_labels_original_image0 * 255).astype('uint8'), (prediction_reshaped * 255).astype('uint8')), axis=1)
     img = Image.fromarray(comparator)
     img.show()
 
