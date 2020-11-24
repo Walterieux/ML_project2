@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
 import ipykernel
 import imageio
 import glob
@@ -70,6 +71,18 @@ def create_patches(data, patch_shape):
     return np.asarray(imgs)
 
 
+def characterise_each_patch_as_road_or_not(labels):
+    """
+    TODO define this function if it works
+    """
+
+    new_labels = np.zeros((labels.shape[0]))
+    for i in range(labels.shape[0]):
+        new_labels[i] = 1 if np.count_nonzero(labels[i]) > labels[i].shape[0] / 2 else 0
+
+    return new_labels
+
+
 def main():
     install("patchify")
     img_patch_size = 16
@@ -81,12 +94,17 @@ def main():
 
     # Retrieve images/groundtruth and create mini patches
     images = extract_images(train_data_filename)
-    labels = extract_labels(train_labels_filename)
     print("images shape: ", images.shape)
+    labels = extract_labels(train_labels_filename)
     print("labels shape: ", labels.shape)
+
+
+
 
     # Split data
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.1)
+
+    test_labels_original_image0 = test_labels[0]
 
     # create mini_patches
     train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
@@ -94,31 +112,37 @@ def main():
     train_labels = create_patches(train_labels, (img_patch_size, img_patch_size))
     test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
 
-    # Test: retrieve original train labels using unpatchify
-    test_labels_original = test_labels.reshape(
-        (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
-    print("test lab origi: ", test_labels_original.shape)
-    test_labels_original_image0 = unpatchify(test_labels_original[0], img_shape)
+    print("train label shape: ", train_labels.shape)
+    train_labels = characterise_each_patch_as_road_or_not(train_labels)
+    test_labels = characterise_each_patch_as_road_or_not(test_labels)
+
+    need_to_train = False
 
     # CNN
-    model = models.Sequential()
-    model.add(
-        layers.Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(img_patch_size, img_patch_size, 3)))
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu'))
+    if need_to_train:
+        model = models.Sequential()
+        model.add(
+            layers.Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(img_patch_size, img_patch_size, 3)))
+        model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
+        model.add(layers.MaxPooling2D((2, 2)))
+        model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu'))
 
-    model.add(layers.Flatten())
-    model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dense(img_patch_size ** 2, activation='sigmoid'))
+        model.add(layers.Flatten())
+        model.add(layers.Dense(128, activation='relu'))
+        # model.add(layers.Dense(img_patch_size ** 2, activation='sigmoid'))
+        model.add(layers.Dense(1, activation='sigmoid'))
 
-    model.summary()
+        model.summary()
 
-    model.compile(optimizer='adam',
-                  loss='binary_crossentropy',
-                  metrics=['binary_accuracy'])
+        model.compile(optimizer='adam',
+                      loss='binary_crossentropy',
+                      metrics=['binary_accuracy'])
 
-    model.fit(train_images, train_labels, epochs=7)
+        model.fit(train_images, train_labels, epochs=5)
+
+        model.save("saved_model")
+    else:
+        model = keras.models.load_model("saved_model")
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
     print("Accuracy = ", test_acc)
@@ -127,11 +151,14 @@ def main():
     prediction = model.predict(test_images)
 
     # show expected and predicted image
-    prediction_reshaped = prediction.reshape(
-        (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
-    prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
+    #prediction_reshaped = prediction.reshape(
+    #    (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
+    #prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
+    prediction_reshaped = prediction.reshape(-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size))
+    print("test_labels_original_image0: ", test_labels_original_image0.shape)
+    print("prediction_reshaped: ", prediction_reshaped.shape)
     comparator = np.concatenate(
-        ((test_labels_original_image0 * 255).astype('uint8'), (prediction_reshaped * 255).astype('uint8')), axis=1)
+        ((test_labels_original_image0 * 255).astype('uint8'), (prediction_reshaped[0].repeat(16, axis=0).repeat(16, axis=1) * 255).astype('uint8')), axis=1)
     img = Image.fromarray(comparator)
     img.show()
 
