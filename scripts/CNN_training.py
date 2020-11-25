@@ -6,11 +6,12 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import ipykernel
+import time
 import imageio
 import glob
 from PIL import Image
 from patchify import patchify, unpatchify
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU
@@ -74,7 +75,13 @@ def create_patches(data, patch_shape):
 
 def characterise_each_patch_as_road_or_not(labels):
     """
-    TODO define this function if it works
+    Binary classification for each patches, a patch is considered as a road if
+    he has more than 50% road on it
+
+    Parameters
+    ----------
+    labels : array_like
+        array of patches
     """
 
     new_labels = np.zeros((labels.shape[0]))
@@ -88,44 +95,49 @@ def main():
     install("patchify")
     img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
     img_shape = (400, 400)
+    num_folds = 10
+    acc_per_fold = []
+    loss_per_fold = []
 
     data_dir = '../data/'
     train_data_filename = data_dir + 'training/images_rotated/'
     train_labels_filename = data_dir + 'training/images_rotated_groundtruth/'
 
-    # Retrieve images/groundtruth and create mini patches
+    # Retrieve images/groundtruths
     images = extract_images(train_data_filename)
     print("images shape: ", images.shape)
     labels = extract_labels(train_labels_filename)
     print("labels shape: ", labels.shape)
 
+    start = time.time()
 
+    kfold = KFold(n_splits=num_folds, shuffle=True)
+    for train_index, test_index in kfold.split(images, labels):
 
+        # Split data
+        train_images = images[train_index]
+        test_images = images[test_index]
+        train_labels = labels[train_index]
+        test_labels = labels[test_index]
 
-    # Split data
-    train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.1)
+        test_labels_original_image0 = test_labels[0]
 
-    test_labels_original_image0 = test_labels[0]
+        # create mini_patches
+        train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
+        test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
+        train_labels = create_patches(train_labels, (img_patch_size, img_patch_size))
+        test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
 
-    # create mini_patches
-    train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
-    test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
-    train_labels = create_patches(train_labels, (img_patch_size, img_patch_size))
-    test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
+        print("train label shape: ", train_labels.shape)
+        train_labels = characterise_each_patch_as_road_or_not(train_labels)
+        test_labels = characterise_each_patch_as_road_or_not(test_labels)
 
-    print("train label shape: ", train_labels.shape)
-    train_labels = characterise_each_patch_as_road_or_not(train_labels)
-    test_labels = characterise_each_patch_as_road_or_not(test_labels)
-
-    need_to_train = False
-
-    # CNN
-    if need_to_train:
         model = models.Sequential()
 
-        # Taken from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
+        # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
         model.add(
-            layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same', input_shape=(img_patch_size, img_patch_size, 3)))
+            layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same',
+                          input_shape=(img_patch_size, img_patch_size, 3)))
         model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
         model.add(layers.MaxPool2D((2, 2)))
         model.add(Dropout(0.20))  # Avoid overfitting
@@ -136,7 +148,7 @@ def main():
         model.add(Dropout(0.20))
 
         model.add(layers.Flatten())
-        model.add(layers.Dense(1024, activation='relu'))
+        model.add(layers.Dense(128, activation='relu'))
         model.add(layers.Dense(1, activation='sigmoid'))
 
         model.summary()
@@ -147,44 +159,39 @@ def main():
 
         model.fit(train_images, train_labels, epochs=10)
 
-        model.save("saved_model")
-    else:
-        model = keras.models.load_model("saved_model")
+        # model.save("saved_model") TODO
 
-    test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
-    print("Accuracy = ", test_acc)
+        # model = keras.models.load_model("saved_model")
 
-    # prediction
-    prediction = model.predict(test_images)
-    # prediction[prediction < 0.5] = 0
-    # prediction[prediction >= 0.5] = 1
+        test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=1)
+        acc_per_fold.append(test_acc)
+        loss_per_fold.append(test_loss)
+        # print("Accuracy = ", test_acc)
 
-    # show expected and predicted image
-    #prediction_reshaped = prediction.reshape(
-    #    (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
-    #prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
+        # prediction
+        prediction = model.predict(test_images)
+        # prediction[prediction < 0.5] = 0
+        # prediction[prediction >= 0.5] = 1
 
-    prediction_reshaped = prediction.reshape(-1, int(img_shape[0]/img_patch_size), int(img_shape[1]/img_patch_size))
-    print("test_labels_original_image0: ", test_labels_original_image0.shape)
-    print("prediction_reshaped: ", prediction_reshaped.shape)
-    prediction_reshaped = prediction_reshaped[0].repeat(img_patch_size, axis=0).repeat(img_patch_size, axis=1)
-    comparator = np.concatenate(
-        ((test_labels_original_image0 * 255).astype('uint8'), (prediction_reshaped * 255).astype('uint8')), axis=1)
-    img = Image.fromarray(comparator)
-    img.show()
+        # show expected and predicted image
+        # prediction_reshaped = prediction.reshape(
+        #    (-1, int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), img_patch_size, img_patch_size))
+        # prediction_reshaped = unpatchify(prediction_reshaped[0], img_shape)
 
-    # Testing
-    tot_black_pixels = np.sum(test_labels < 0.5)
-    tot_pixels = test_labels.shape[0] * test_labels.shape[1]
-    print(tot_black_pixels / tot_pixels * 100, "% of black pixels")
+        prediction_reshaped = prediction.reshape(-1, int(img_shape[0] / img_patch_size),
+                                                 int(img_shape[1] / img_patch_size))
+        print("test_labels_original_image0: ", test_labels_original_image0.shape)
+        print("prediction_reshaped: ", prediction_reshaped.shape)
+        prediction_reshaped = prediction_reshaped[0].repeat(img_patch_size, axis=0).repeat(img_patch_size, axis=1)
+        comparator = np.concatenate(
+            ((test_labels_original_image0 * 255).astype('uint8'), (prediction_reshaped * 255).astype('uint8')), axis=1)
+        img = Image.fromarray(comparator)
+        img.show()
 
-    """
-    threshold = 0.5
-    result[result > threshold] = 1
-    result[result <= threshold] = 0
-    img = Image.fromarray(result * 255, 'L')
-    img.show()
-    """
+    end = time.time()
+    print("Computation time: ", end - start)
+    print("Mean accuracy = ", np.mean(acc_per_fold), " accuracy variance: ", np.var(acc_per_fold))
+    print("Mean loss = ", np.mean(loss_per_fold), " loss variance: ", np.var(loss_per_fold))
 
 
 if __name__ == '__main__':
