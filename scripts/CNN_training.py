@@ -23,7 +23,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 1
+NUM_EPOCHS = 10
 
 
 def install(package):
@@ -109,8 +109,8 @@ def train_model(train_images, test_images, train_labels, test_labels, epochs):
     patches_test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
 
     print("train label shape: ", patches_train_labels.shape)
-    train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
-    test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
+    patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
+    patches_test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
 
     # First model
     model1 = models.Sequential()
@@ -138,7 +138,7 @@ def train_model(train_images, test_images, train_labels, test_labels, epochs):
                    loss='binary_crossentropy',
                    metrics=['binary_accuracy'])
 
-    model1.fit(patches_train_images, train_labels, epochs=epochs)
+    model1.fit(patches_train_images, patches_train_labels, epochs=7)
 
     predicted_train_labels = model1.predict(patches_train_images)
     predicted_train_labels = predicted_train_labels.reshape(-1, int(img_shape[0] / img_patch_size),
@@ -150,36 +150,55 @@ def train_model(train_images, test_images, train_labels, test_labels, epochs):
     model2 = models.Sequential()
 
     model2.add(
-        layers.Conv2D(512, kernel_size=(5, 5), activation='relu', padding='same',
+        layers.Conv2D(512, kernel_size=(3, 3), activation='relu', padding='same',
                       input_shape=(int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), 1)))
 
-    model2.add(layers.Conv2D(512, kernel_size=(5, 5), activation='relu'))
-    # model2.add(layers.MaxPool2D((2, 2)))
-    # model2.add(Dropout(0.20))
+    model2.add(layers.Conv2D(256, kernel_size=(3, 3), activation='relu'))
+    model2.add(layers.AvgPool2D((2, 2)))
+    model2.add(Dropout(0.40))
 
     model2.add(layers.Flatten())
     model2.add(layers.Dense(1024, activation='relu'))
     model2.add(layers.Dense(img_shape[0] * img_shape[1], activation='sigmoid'))
 
-    test_loss, test_acc = model2.fit(predicted_train_labels, test_labels, verbose=1)
+    model2.compile(optimizer='adam',
+                   loss='binary_crossentropy',
+                   metrics=['binary_accuracy'])
+
+    pred_tr_lab_shape = predicted_train_labels.shape
+    print("pred_tr_lab_shape: ", pred_tr_lab_shape)
+    tr_lab_shape = train_labels.shape
+    print("tr_lab_shape: ", tr_lab_shape)
+    model2.fit( # test_loss, test_acc =
+        predicted_train_labels.reshape((pred_tr_lab_shape[0], pred_tr_lab_shape[1], pred_tr_lab_shape[2], 1)),
+        train_labels.reshape(tr_lab_shape[0], -1),
+        epochs=30)
 
     predicted_test_labels = model1.predict(patches_test_images)
     predicted_test_labels = predicted_test_labels.reshape(-1, int(img_shape[0] / img_patch_size),
                                                           int(img_shape[1] / img_patch_size))
 
-    predicted_labels = model2.predict(predicted_test_labels)
+    pred_te_lab_shape = predicted_test_labels.shape
+    predicted_labels = model2.predict(predicted_test_labels.reshape((pred_te_lab_shape[0], pred_te_lab_shape[1], pred_te_lab_shape[2], 1)))
     print("predicted_labels shape: ", predicted_labels.shape)
 
     comparator = np.concatenate(
-        ((test_images[0] * 255).astype('uint8'), (predicted_labels[0] * 255).astype('uint8')), axis=1)
+        ((test_labels[0] * 255).astype('uint8'),
+         (predicted_test_labels[0].repeat(img_patch_size, axis=0).repeat(img_patch_size, axis=1) * 255).astype('uint8')),
+        axis=1)
+    comparator = np.concatenate(
+        (comparator,
+         (predicted_labels[0].reshape(img_shape) * 255).astype('uint8')),
+        axis=1)
     img = Image.fromarray(comparator)
     img.show()
 
-    return model1, test_loss, test_acc  # TODO change model1 by ??? we have 2 models!
+    return model1  # , test_loss, test_acc  # TODO change model1 by ??? we have 2 models!
 
 
 def cross_validation_training(images, labels, num_folds):
     """
+
     Train model with cross validation
 
     Returns the model with the best accuracy over the testing set
@@ -227,10 +246,10 @@ def train_test_split_training(images, labels, test_size):
                                                                             test_size=test_size,
                                                                             shuffle=True)
 
-    model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels, NUM_EPOCHS)
+    model = train_model(train_images, test_images, train_labels, test_labels, NUM_EPOCHS)
 
-    print("Accuracy = ", test_acc)
-    print("Loss = ", test_loss)
+    # print("Accuracy = ", test_acc)
+    # print("Loss = ", test_loss)
 
     return model
 
