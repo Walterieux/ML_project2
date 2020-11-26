@@ -1,33 +1,47 @@
-# Project Road Segmentation
+# Road Segmentation
 
-For this choice of project task, we provide a set of satellite images acquired 
-from GoogleMaps. We also provide ground-truth images where each pixel is labeled 
-as road or background. 
+This project creates a road classifying model. The model classifies pixels of
+a given satellite image with the labels `road=1, background=0`. The resulting
+label array can be interpreted and displayed as an image. A CNN is used to 
+train this model.
 
-Your task is to train a classifier to segment roads in these images, i.e. 
-assigns a label `road=1, background=0` to each pixel.
+## Dependecies
+In order to run the various python scripts of this project, we recommend the
+usage of a separate anconda environment. The following lines, excuted in order
+in your anaconda prompt, will take care of this:
 
-Submission system environment setup:
+* Create a new anaconda environment : `conda create -n tf tensorflow`
+* Activate (switch to) the new environment : `conda activate tf`
 
-1. The dataset is available from the 
-[CrowdAI page](https://www.crowdai.org/challenges/epfl-ml-road-segmentation).
+The above steps will create a new environment with TensorFlow 2.1 installed.
+You are free to choose Python 3.6, 3.7 or 3.8 for this envionment. Any other 
+Python versions might result in inability to execute the project files. If you
+wish to install the GPU version of tensorflow for improved training speed, 
+use the following lines instead:
 
-2. Obtain the python notebook `segment_aerial_images.ipynb` from this github 
-folder, to see example code on how to extract the images as well as 
-corresponding labels of each pixel.
+* Create a new anaconda environment : `conda create -n tf-gpu tensorflow-gpu`
+* Activate (switch to) the new environment : `conda activate tf-gpu`
 
-The notebook shows how to use `scikit learn` to generate features from each 
-pixel, and finally train a linear classifier to predict whether each pixel is 
-road or background. Or you can use your own code as well. Our example code here 
-also provides helper functions to visualize the images, labels and predictions. 
-In particular, the two functions `mask_to_submission.py` and 
-`submission_to_mask.py` help you to convert from the submission format to a 
-visualization, and vice versa.
+Note that TF for GPU requires:
 
-3. As a more advanced approach, try `tf_aerial_images.py`, which demonstrates 
-the use of a basic convolutional neural network in TensorFlow for the same 
-prediction task.
+* A compatible NVidia GPU
+* NVidia CUDA Development Kit v10.1
+* NVidia cuDNN 7 
 
-Evaluation Metric:
- [F1 score](https://en.wikipedia.org/wiki/F1_score)
+The following dependencies need to be installed before you can run
+the project. Next to them are the anaconda prompt commands needed to 
+install them on your anaconda environment: 
+
+* ipykernel : `conda install -c anaconda ipykernel`
+* patchify : `pip install patchify`
+* imageio : `conda install -c anaconda imageio`
+* glob : `pip install glob`
+* pillow : `conda install -c anaconda pillow`
+
+Note that pip (or pip3) is required to install some dependecies.
+
+## Files
+
+* `run.py` contains the creation, training and evaluation of our CNN. 
+It can be run from your anaconda promt, with the correct environment selected.
  
