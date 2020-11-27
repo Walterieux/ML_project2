@@ -23,8 +23,8 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS_MODEL1 = 7
-NUM_EPOCHS_MODEL2 = 30
+NUM_EPOCHS_MODEL1 = 10
+NUM_EPOCHS_MODEL2 = 40
 
 
 def install(package):
@@ -41,7 +41,7 @@ def extract_images(image_path):
     for img_path in glob.glob(image_path + "/*.png"):
         img = imageio.imread(img_path)
         img = img / 255.0
-        imgs.append(img)
+        imgs.append(img.astype('float32'))
 
     return np.asarray(imgs)
 
@@ -55,7 +55,7 @@ def extract_labels(label_path):
         # Formalize labels
         img[img <= 127] = 0
         img[img > 127] = 1
-        imgs.append(img)
+        imgs.append(img.astype('uint8'))
 
     return np.asarray(imgs)
 
@@ -140,6 +140,8 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     model1.fit(patches_train_images, patches_train_labels, epochs=NUM_EPOCHS_MODEL1)
 
+    model1.evaluate(patches_test_images, patches_test_labels)
+
     predicted_train_labels = model1.predict(patches_train_images)
     predicted_train_labels = predicted_train_labels.reshape(-1, int(img_shape[0] / img_patch_size),
                                                             int(img_shape[1] / img_patch_size))
@@ -150,15 +152,15 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model2 = models.Sequential()
 
     model2.add(
-        layers.Conv2D(256, kernel_size=(4, 4), activation='relu', padding='same',
+        layers.Conv2D(256, kernel_size=(4, 4), strides=(4, 4), activation='relu', padding='same',
                       input_shape=(int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), 1)))
 
-    model2.add(layers.Conv2D(256, kernel_size=(4, 4), activation='relu'))
-    model2.add(layers.AvgPool2D((2, 2)))
+    model2.add(layers.Conv2D(256, kernel_size=(4, 4), strides=(4, 4), activation='relu'))
+    model2.add(layers.AvgPool2D((2, 2), padding='same'))
     model2.add(Dropout(0.30))
 
-    model2.add(layers.Conv2D(128, kernel_size=(4, 4), activation='relu'))
-    model2.add(layers.AvgPool2D((2, 2)))
+    model2.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(4, 4), activation='relu', padding='same'))
+    model2.add(layers.AvgPool2D((2, 2), padding='same'))
     model2.add(Dropout(0.30))
 
     model2.add(layers.Flatten())
@@ -271,8 +273,8 @@ def main():
     install("patchify")
 
     data_dir = '../data/'
-    train_data_filename = data_dir + 'training/images/'
-    train_labels_filename = data_dir + 'training/groundtruth/'
+    train_data_filename = data_dir + 'training/data_augmented/'
+    train_labels_filename = data_dir + 'training/data_augmented_groundtruth/'
 
     # Retrieve images/groundtruths
     images = extract_images(train_data_filename)
