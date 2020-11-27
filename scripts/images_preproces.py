@@ -7,15 +7,18 @@ Created on Tue Nov 17 18:09:52 2020
 
 import numpy as np 
 from scipy.ndimage import filters,zoom
-from PIL import Image 
+from PIL import Image,ImageOps
 import os
 import imageio
 
+
+
 def read_images(filename, num_images):
-    """ @input: filename: name of the folder where the images are stored 
-            num_images: number of images stored in the folder 
-    @output: list of images stored in the folder
-"""
+    """ @input: -filename: name of the directory where the images are stored 
+                -num_images: number of images in the directory
+        @output: list of 3-d array (RGB) of images 
+    """
+
     imgs = []
     for i in range(1, num_images + 1):
         imageid = "satImage_%.3d" % i
@@ -24,8 +27,6 @@ def read_images(filename, num_images):
             img = Image.open(image_filename)
             imgs.append(img)
     return imgs
-
-
 
 def rotate_images(filename,data_images): 
     """ @input: filename: name of the folder where the images will bestored 
@@ -44,44 +45,69 @@ def edges_images(filename,data_images):
             data_images: list of images that we will get the edges
     @output: images edges in the folder
 """
-
     for j,image in enumerate(data_images):
-        image = np.array( image, dtype='uint32' )
-        imx = filters.sobel(image,1,cval=0.0)  # axis 1 is x
-        imy = filters.sobel(image,0, cval=0.0) # axis 0 is y
+        image=ImageOps.grayscale(image)
+        image = np.array( image,dtype="uint32" )
+        imx=np.zeros(np.shape(image))
+        imy=np.zeros(np.shape(image))
+        filters.sobel(image,1,output=imx,cval=0.0)  # axis 1 is x
+        filters.sobel(image,0,output=imy, cval=0.0) # axis 0 is y
         magnitude = np.sqrt(imx**2+imy**2)
-        save_img(filename,np.where(magnitude>=0.16*np.max(magnitude),255,0),j+1)
-        
+        save_img(filename,np.where(magnitude>=0.12*np.max(magnitude),1,0),j+1)
 
+def get_mean_gray_value(images_data,images_groundtruth):
+    """ input: @images_data  list of images 
+                @images_ground: list of images groundtruth
+        calculate: the mean value RGB of the road """
+    mean_value_gray=np.zeros(3)
+    for i,image in enumerate(images_data):
+        image=np.array(image)
+        for j in range(3):
+            mean_value_gray[j]+=1/100 * np.mean(image[images_groundtruth[i]!=0,j])
+    return mean_value_gray
+            
+def distance_image(filename,images_data,mean_value_gray):
+    """ input:  @filename: plae where the distances images will be stored
+                @images_data  list of images 
+                @mean_value_gray: mean value of road in our trainingset
+        calculate: the distance image with mean value of road"""
+    for j,image in enumerate(images_data):
+        image=np.array(image)
+        norm_image=np.linalg.norm(image-mean_value_gray,axis=2)
+        save_img(filename,np.where(norm_image<=0.1*np.max(norm_image),1,0),j+1)    
+        
+def mirror_images(filename,images_data):
+    """ input:  @filename: plae where the distances images will be stored
+                @images_data  list of images 
+        output:store the mirror images of the images_data in the folder filename"""
+    for j,image in enumerate(images_data):
+        save_img(filename,ImageOps.mirror(image),j+800+1)
+        
 def save_img(filename,image,number):
-    """ @input: filename: name of the folder where the images will bestored 
-            image: image that will be stored (array)
-            number: the image will be stored with filename  filename + imageid + ".png"
-    @output: image  in the folder
-"""
+    """ @input : -filename : name of the directory where the images should be stored 
+                 -data_images: array of images that will be rotated from [45,90,135,..360] degrees
+        @output: store the rotated images in the directory filename
+    """
     imageid = "satImage_%.3d" % number
     image_filename = filename + imageid + ".png"
-    imageio.imwrite(image_filename, image)
+    if (np.array_equal(image, image.astype(bool))):
+        imageio.imwrite(image_filename,(image*255).astype(np.uint8))
+    else :
+        imageio.imwrite(image_filename, image)
 
-
+        
 data_dir = '../data/'
 train_data_filename = data_dir + 'training/images/'
 train_labels_filename = data_dir + 'training/groundtruth/'
-TRAINING_SIZE = 100
-train_labels_filename = data_dir + 'training/groundtruth/'
-train_data_filename_rotated = data_dir + 'training/images_rotated/'
-train_data_filename_rotated_groundtruth = data_dir + 'training/images_rotated_groundtruth/'
-
-train_data_filename_edges = data_dir + 'training/images_edges/'
-train_data_filename_edges_rotated = data_dir + 'training/images_edges_rotated/'
+train_augmented = data_dir + 'training/data_augmented/'
+train_data_norm = data_dir + 'training/images_norm/'
+TRAINING_SIZE = 1600
 
 
-data = read_images(train_data_filename, TRAINING_SIZE)
-data_rotated = read_images(train_data_filename_rotated,800)
+data = read_images(train_augmented, TRAINING_SIZE)
 
-data_groundtruh = read_images(train_labels_filename,TRAINING_SIZE)
+distance_image(train_data_norm,data,[80.68715833, 80.4653,     80.06888333])
+#rotate_images(train_data_filename_rotated_groundtruth,data_groundtruh)"""
 
-rotate_images(train_data_filename_rotated_groundtruth,data_groundtruh)
-
-edges_images(train_data_filename_edges,data)
-edges_images(train_data_filename_edges_rotated,data_rotated)
+#edges_images(train_data_filename_edges,data)
+#edges_images(train_data_filename_edges_rotated,data_rotated)
