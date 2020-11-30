@@ -303,8 +303,6 @@ def main():
         model1 = keras.models.load_model("saved_model1")
         model2 = keras.models.load_model("saved_model2")
 
-    # TODO create a function to predict values using the two models
-
     end = time.time()
     print("Computation time: ", end - start)
 
