@@ -23,7 +23,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 20
+NUM_EPOCHS = 8
 
 
 def install(package):
