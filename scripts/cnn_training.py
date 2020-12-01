@@ -23,7 +23,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 7
+NUM_EPOCHS = 10
 
 
 def install(package):
@@ -152,7 +152,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(Dropout(0.20))
 
     model.add(layers.Flatten())
-    model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adam',
