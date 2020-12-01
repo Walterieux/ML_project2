@@ -23,7 +23,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 10
+NUM_EPOCHS = 15
 
 
 def install(package):
@@ -135,21 +135,27 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
     model.add(
-        layers.Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same',
+        layers.Conv2D(128, kernel_size=(3, 3), padding='same',
                       input_shape=(img_patch_size, img_patch_size, 3)))
-    model.add(layers.Conv2D(256, kernel_size=(3, 3), activation='relu'))
+    model.add(LeakyReLU(alpha=.05))
+    model.add(layers.Conv2D(256, kernel_size=(3, 3)))
+    model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(0.15))  # Avoid overfitting
+    model.add(Dropout(.15))  # Avoid overfitting
 
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(LeakyReLU(alpha=.05))
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(0.15))
+    model.add(Dropout(.15))
 
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'))
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
+    model.add(LeakyReLU(alpha=.05))
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
+    model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(0.20))
+    model.add(Dropout(.20))
 
     model.add(layers.Flatten())
     model.add(layers.Dense(32, activation='relu'))
