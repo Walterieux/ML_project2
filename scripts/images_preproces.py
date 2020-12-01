@@ -60,7 +60,6 @@ def edges_images(filename,data_images):
         filters.sobel(image,0,output=imy, cval=0.0) # axis 0 is y
         magnitude = np.sqrt(imx**2+imy**2)
         save_img(filename, magnitude,j+1)
-        #save_img(filename,np.where(magnitude>=0.12*np.max(magnitude),1,0),j+1)
 
 def get_mean_gray_value(images_data,images_groundtruth):
     """ input: @images_data  list of images
@@ -82,7 +81,6 @@ def distance_image(filename,images_data,mean_value_gray):
         image=np.array(image)
         norm_image=np.linalg.norm(image-mean_value_gray,axis=2)
         save_img(filename,norm_image,j+1)
-        #save_img(filename,np.where(norm_image<=0.1*np.max(norm_image),1,0),j+1)
 
 def mirror_images(filename,images_data):
     """ input:  @filename: plae where the distances images will be stored
