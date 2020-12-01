@@ -155,7 +155,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(1, activation='sigmoid'))
 
-    model.compile(optimizer='adam',
+    model.compile(optimizer='adamax',
                    loss='binary_crossentropy',
                    metrics=['binary_accuracy'])
 
