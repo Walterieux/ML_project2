@@ -23,7 +23,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 8
+NUM_EPOCHS = 7
 
 
 def install(package):
@@ -138,13 +138,18 @@ def train_model(train_images, test_images, train_labels, test_labels):
         layers.Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same',
                       input_shape=(img_patch_size, img_patch_size, 3)))
     model.add(layers.Conv2D(256, kernel_size=(3, 3), activation='relu'))
-    model.add(layers.MaxPool2D((2, 2)))
-    model.add(Dropout(0.23))  # Avoid overfitting
+    model.add(layers.MaxPool2D((2, 2), padding='same'))
+    model.add(Dropout(0.15))  # Avoid overfitting
 
     model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
-    model.add(layers.MaxPool2D((2, 2)))
-    model.add(Dropout(0.23))
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(layers.MaxPool2D((2, 2), padding='same'))
+    model.add(Dropout(0.15))
+
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(layers.MaxPool2D((2, 2), padding='same'))
+    model.add(Dropout(0.20))
 
     model.add(layers.Flatten())
     model.add(layers.Dense(128, activation='relu'))
