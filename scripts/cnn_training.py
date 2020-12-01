@@ -141,14 +141,14 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.Conv2D(256, kernel_size=(3, 3)))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.15))  # Avoid overfitting
+    model.add(Dropout(.20))  # Avoid overfitting
 
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.15))
+    model.add(Dropout(.20))
 
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
@@ -158,7 +158,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(Dropout(.20))
 
     model.add(layers.Flatten())
-    model.add(layers.Dense(32, activation='relu'))
+    # model.add(layers.Dense(16, activation='relu'))
     model.add(layers.Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adamax',
