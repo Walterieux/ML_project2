@@ -305,10 +305,7 @@ def main():
 
     new_images = np.zeros((images.shape[0],images.shape[1],images.shape[2],5))
     for j in range(images.shape[0]):
-        new_image_norm = images_norm[j].reshape(images_norm[j].shape[0],images_norm[j].shape[1],1)
-
-        new_image_edges = images_edges[j].reshape(images_edges[j].shape[0],images_edges[j].shape[1],1)
-        new_images[j,:,:,:]=np.concatenate((images[j,:,:,:],np.concatenate( (new_image_norm, new_image_edges), axis = 2  ) ), axis = 2)
+        new_images[j] = np.concatenate((images[j],np.concatenate((images_norm[j,:,:,None],images_edges[j,:,:,None]),axis=2)),axis=2)
     
     print("labels shape: ", labels.shape)
     print("new images : ", new_images.shape)
