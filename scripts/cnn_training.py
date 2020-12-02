@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import ipykernel
+import matplotlib.pyplot as plt
 import time
 import imageio
 import glob
@@ -23,7 +24,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 15
+NUM_EPOCHS = 10
 
 
 def install(package):
@@ -133,10 +134,11 @@ def train_model(train_images, test_images, train_labels, test_labels):
     # First model
     model = models.Sequential()
 
+    # literature https://www.kdnuggets.com/2017/11/understanding-deep-convolutional-neural-networks-tensorflow-keras.html/2
     # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
     model.add(
         layers.Conv2D(128, kernel_size=(3, 3), padding='same',
-                      input_shape=(img_patch_size, img_patch_size, 3)))
+                      input_shape=(img_patch_size, img_patch_size, 3)))  # TODO change this
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.Conv2D(256, kernel_size=(3, 3)))
     model.add(LeakyReLU(alpha=.05))
@@ -150,7 +152,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.MaxPool2D((2, 2), padding='same'))
     model.add(Dropout(.20))
 
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
@@ -158,14 +160,28 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(Dropout(.20))
 
     model.add(layers.Flatten())
-    # model.add(layers.Dense(16, activation='relu'))
+    model.add(layers.Dense(16, activation='relu'))
+    model.add(Dropout(.3))
     model.add(layers.Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adamax',
-                   loss='binary_crossentropy',
-                   metrics=['binary_accuracy'])
+                  loss='binary_crossentropy',
+                  metrics=['binary_accuracy'])
 
-    model.fit(patches_train_images, patches_train_labels, epochs=NUM_EPOCHS)
+    history = model.fit(patches_train_images,
+                        patches_train_labels,
+                        batch_size=64,
+                        epochs=NUM_EPOCHS,
+                        validation_data=(patches_test_images, patches_test_labels))
+
+    plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
+    plt.plot(history.history['val_binary_accuracy'], 'r', label="accuracy on validation set")
+    plt.grid(True)
+    plt.title('Training Accuracy vs. Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.show()
 
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
@@ -238,12 +254,25 @@ def main():
     data_dir = '../data/'
     train_data_filename = data_dir + 'training/data_augmented/'
     train_labels_filename = data_dir + 'training/data_augmented_groundtruth/'
+    train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
+    train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
 
     # Retrieve images/groundtruths
     images = extract_images(train_data_filename)
-    print("images shape: ", images.shape)
     labels = extract_labels(train_labels_filename)
-    print("labels shape: ", labels.shape)
+    # norm = extract_images(train_data_filename_norm)[:, :, :, None]
+    # edges = extract_images(train_data_filename_edges)[:, :, :, None]
+
+    """
+    images = np.concatenate((images, norm), axis=3)
+    images = np.concatenate((images, edges), axis=3)
+
+    # shrink data size
+    indexes = np.arange(len(images))
+    np.random.shuffle(indexes)
+    images = images[indexes[0: int(0.5 * len(indexes))]]
+    labels = labels[indexes[0: int(0.5 * len(indexes))]]
+    """
 
     if need_to_train:
         model = train_test_split_training(images, labels, 0.1)
