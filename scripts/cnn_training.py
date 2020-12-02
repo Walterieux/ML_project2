@@ -270,7 +270,6 @@ def train_test_split_training(images, labels, test_size):
                                                                             labels,
                                                                             test_size=test_size,
                                                                             shuffle=True)
-
     model1, model2, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
 
     print("Accuracy = ", test_acc)
@@ -284,7 +283,6 @@ def main():
     need_to_train = True
 
     install("patchify")
-
     data_dir = '../data/'
     train_data_filename = data_dir + 'training/data_augmented/'
     train_labels_filename = data_dir + 'training/data_augmented_groundtruth/'
