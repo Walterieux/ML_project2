@@ -19,7 +19,16 @@ def separate_data() :
     data_dir_training_test = data_dir + 'training_test/'
     list_of_features = ["data_augmented/","data_augmented_distance/", "data_augmented_edges/", "data_augmented_groundtruth/", "data_augmented_norm/"]
     choices = np.random.choice(np.linspace(1,100,100),90,replace=False).astype(int)
-    choices_test = np.delete(choices, np.array([1,2,5])).astype(int)
+    choices_test = np.zeros(10).astype(int)
+    counter  = 0
+    for index in range(1,101): 
+        if np.isin(index,choices) == False : 
+            choices_test[counter] = int(index)
+            counter += 1
+    
+    #choices_test = np.delete(np.linspace(1,100,100).astype(int),choices ).astype(int)
+    print(choices_test)
+    print(choices)
     for number, feature in enumerate(list_of_features):
         directory_to_read = data_dir_training + feature
         directory_to_training = data_dir_training_training + feature
@@ -36,7 +45,7 @@ def extract_img_from_list(filename,list_of_number):
     for i in list_of_number:
         for j in range(8):
             for k in range(2):
-                number = (i-1)*8 + j + k *800
+                number = (i-1)*8 + j + 1 +   k *800
                 imageid =  "satImage_%.3d" %number
                 image_filename = filename + imageid + ".png"
 
