@@ -24,7 +24,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 20
+NUM_EPOCHS = 40
 
 
 def install(package):
@@ -143,41 +143,39 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.Conv2D(256, kernel_size=(3, 3)))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.30))  # Avoid overfitting
+    model.add(Dropout(.8))  # Avoid overfitting
 
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.30))
+    model.add(Dropout(.8))
 
-    """
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.30))
-    """
+    model.add(Dropout(.80))
 
     model.add(layers.Flatten())
     model.add(layers.Dense(16))
     model.add(LeakyReLU(alpha=.05))
-    model.add(Dropout(.35))
+    model.add(Dropout(.8))
     model.add(layers.Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
-                  metrics=['accuracy'])
+                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
 
-    plt.plot(history.history['accuracy'], 'g', label="accuracy on train set")
-    plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
+    plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
+    plt.plot(history.history['val_binary_accuracy'], 'r', label="accuracy on validation set")
     plt.grid(True)
     plt.title('Training Accuracy vs. Validation Accuracy')
     plt.xlabel('Epochs')
@@ -254,8 +252,8 @@ def main():
     install("patchify")
 
     data_dir = '../data/'
-    train_data_filename = data_dir + 'training/data_augmented/'
-    train_labels_filename = data_dir + 'training/data_augmented_groundtruth/'
+    train_data_filename = data_dir + 'training/images/'
+    train_labels_filename = data_dir + 'training/groundtruth/'
     train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
     train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
 
