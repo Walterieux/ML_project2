@@ -24,7 +24,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 10
+NUM_EPOCHS = 20
 
 
 def install(package):
@@ -143,39 +143,41 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.Conv2D(256, kernel_size=(3, 3)))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.20))  # Avoid overfitting
+    model.add(Dropout(.30))  # Avoid overfitting
 
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.20))
+    model.add(Dropout(.30))
 
+    """
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
     model.add(LeakyReLU(alpha=.05))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.20))
+    model.add(Dropout(.30))
+    """
 
     model.add(layers.Flatten())
-    model.add(layers.Dense(16, activation='relu'))
-    model.add(Dropout(.3))
+    model.add(layers.Dense(16))
+    model.add(LeakyReLU(alpha=.05))
+    model.add(Dropout(.35))
     model.add(layers.Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
-                  metrics=['binary_accuracy'])
+                  metrics=['accuracy'])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=64,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
 
-    plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
-    plt.plot(history.history['val_binary_accuracy'], 'r', label="accuracy on validation set")
+    plt.plot(history.history['accuracy'], 'g', label="accuracy on train set")
+    plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
     plt.grid(True)
     plt.title('Training Accuracy vs. Validation Accuracy')
     plt.xlabel('Epochs')
