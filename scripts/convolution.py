@@ -11,6 +11,41 @@ from scipy import signal
 import glob
 from matplotlib import pyplot as plt
 
+
+def separate_data() : 
+    data_dir = '../data/' 
+    data_dir_training = data_dir + 'training/'
+    data_dir_training_training = data_dir + 'training_training/'
+    data_dir_training_test = data_dir + 'training_test/'
+    list_of_features = ["data_augmented/","data_augmented_distance/", "data_augmented_edges/", "data_augmented_groundtruth/", "data_augmented_norm/"]
+    choices = np.random.choice(np.linspace(1,100,100),90,replace=False).astype(int)
+    choices_test = np.delete(choices, np.array([1,2,5])).astype(int)
+    for number, feature in enumerate(list_of_features):
+        directory_to_read = data_dir_training + feature
+        directory_to_training = data_dir_training_training + feature
+        data_dir_test = data_dir_training_test + feature
+        imgs_train = extract_img_from_list(directory_to_read,choices)
+        imgs_test = extract_img_from_list(directory_to_read,choices_test)
+        print(data_dir_training_test)
+        store_list_img(directory_to_training,imgs_train)
+        store_list_img(data_dir_test,imgs_test)
+        
+
+def extract_img_from_list(filename,list_of_number):
+    imgs = []
+    for i in list_of_number:
+        for j in range(8):
+            for k in range(2):
+                number = (i-1)*8 + j + k *800
+                imageid =  "satImage_%.3d" %number
+                image_filename = filename + imageid + ".png"
+
+                if os.path.isfile(image_filename):
+                    img = imageio.imread(image_filename)
+                    imgs.append(img)
+    return np.asarray(imgs)
+
+    return np.asarray(imgs)
 def reshape_higher_dim(patch, patch_size, image_size):
     """ input : @patch : array like, patch of image 
                 @patch_size : tuple, size of patch 
@@ -99,7 +134,9 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
         save_comparaison(original_images[number], image, correct_patch, filename_comparaison,number+1)
         save_img(filename,correct_patch , number+1)
         
-
+def store_list_img(filename,images_list):
+    for number, image in enumerate(images_list) : 
+        save_img(filename,image,number+1)
 def save_img(filename,image,number):
     """ @input : -filename : name of the directory where the images should be stored
                  -data_images: array of images that will be rotated from [45,90,135,..360] degrees
@@ -145,6 +182,10 @@ original_img  = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
 
 
-original_images = extract_images_test(original_img, 50)
+
+separate_data()
+
+
+"""original_images = extract_images_test(original_img, 50)
 images = extract_images(test_dir)
-submission_convolution(correct_labels, images, filename_comparaison,original_images)
+submission_convolution(correct_labels, images, filename_comparaison,original_images)"""
