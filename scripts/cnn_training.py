@@ -15,7 +15,7 @@ from patchify import patchify, unpatchify
 from sklearn.model_selection import train_test_split, KFold
 
 from tensorflow.keras import layers, models
-from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU
+from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -24,7 +24,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 40
+NUM_EPOCHS = 50
 
 
 def install(package):
@@ -66,7 +66,7 @@ def create_patches(data, patch_shape):
     imgs = []
     for i in range(data.shape[0]):
         if len(patch_shape) == 3:  # RGB images
-            patches = patchify(data[i], patch_shape, step=patch_shape[0])
+            patches = patchify(data[i], patch_shape, step=patch_shape[0])  # TODO change step to have context border: ex step=patch_shape[0] - border
             patches = patches.reshape((-1, patch_shape[0], patch_shape[1], patch_shape[2]))
             imgs.extend(patches)
         else:
@@ -136,33 +136,41 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     # literature https://www.kdnuggets.com/2017/11/understanding-deep-convolutional-neural-networks-tensorflow-keras.html/2
     # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
+
+    #
+    # https://www.learnopencv.com/understanding-alexnet/ dropout 0.5
+
+    """ ~ Model from Stanford University: https://youtu.be/bNb2fEVKeEo?t=3683"""
     model.add(
-        layers.Conv2D(128, kernel_size=(3, 3), padding='same',
+        layers.Conv2D(64, kernel_size=(3, 3), padding='same',
                       input_shape=(img_patch_size, img_patch_size, 3)))  # TODO change this
-    model.add(LeakyReLU(alpha=.05))
-    model.add(layers.Conv2D(256, kernel_size=(3, 3)))
-    model.add(LeakyReLU(alpha=.05))
-    model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.8))  # Avoid overfitting
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(64, kernel_size=(3, 3)))
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
+    model.add(Dropout(.25))  # Avoid overfitting
 
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
-    model.add(LeakyReLU(alpha=.05))
+    model.add(tf.keras.layers.ReLU())
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
-    model.add(LeakyReLU(alpha=.05))
+    model.add(tf.keras.layers.ReLU())
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.8))
+    model.add(Dropout(.25))
 
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
-    model.add(LeakyReLU(alpha=.05))
+    model.add(tf.keras.layers.ReLU())
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
-    model.add(LeakyReLU(alpha=.05))
+    model.add(tf.keras.layers.ReLU())
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.80))
+    model.add(Dropout(.25))
 
     model.add(layers.Flatten())
-    model.add(layers.Dense(16))
-    model.add(LeakyReLU(alpha=.05))
-    model.add(Dropout(.8))
+    model.add(layers.Dense(256))
+    model.add(tf.keras.layers.ReLU())
+    #model.add(Dropout(.5))
+    #model.add(layers.Dense(1024))
+    #model.add(tf.keras.layers.ReLU())
+    #model.add(Dropout(.5))
     model.add(layers.Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adamax',
@@ -257,30 +265,29 @@ def main():
     train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
     train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
 
+    training_training_data_path = data_dir + 'training_training/data_augmented'
+    training_training_labels_path = data_dir + 'training_training/data_augmented_groundtruth'
+    training_test_data_path = data_dir + 'training_test/data_augmented'
+    training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
+
     # Retrieve images/groundtruths
-    images = extract_images(train_data_filename)
-    labels = extract_labels(train_labels_filename)
+    # images = extract_images(train_data_filename)
+    # labels = extract_labels(train_labels_filename)
     # norm = extract_images(train_data_filename_norm)[:, :, :, None]
     # edges = extract_images(train_data_filename_edges)[:, :, :, None]
 
-    """
-    images = np.concatenate((images, norm), axis=3)
-    images = np.concatenate((images, edges), axis=3)
+    train_images = extract_images(training_training_data_path)
+    test_images = extract_images(training_test_data_path)
+    train_labels = extract_labels(training_training_labels_path)
+    test_labels = extract_labels(training_test__labels_path)
 
-    # shrink data size
-    indexes = np.arange(len(images))
-    np.random.shuffle(indexes)
-    images = images[indexes[0: int(0.5 * len(indexes))]]
-    labels = labels[indexes[0: int(0.5 * len(indexes))]]
-    """
+    images = extract_images(train_data_filename)
+    labels = extract_labels(train_labels_filename)
 
-    if need_to_train:
-        model = train_test_split_training(images, labels, 0.1)
-        model.save("saved_model")
-    else:
-        model = keras.models.load_model("saved_model")
+    model = train_test_split_training(images, labels, 0.9)
+    # model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
+    model.save("saved_model")
 
-    # TODO create a function to predict values using the two models
 
     end = time.time()
     print("Computation time: ", end - start)
