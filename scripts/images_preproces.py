@@ -13,6 +13,17 @@ import imageio
 
 
 
+def center(list_of_image, sigma=np.zeros(3), mean=np.zeros(3), still_to_center=True):
+    #input : @list_of_image : array like [n,m,l,3]
+    #return centered data : data - mean / std 
+    if still_to_center == True :
+        sigma = np.std(list_of_image, axis =(0,1,2)) 
+        print(sigma)
+        mean  = np.mean(list_of_image, axis=(0,1,2))
+        print(mean)
+    centered_images = np.zeros(np.shape(list_of_image))
+    return (centered_images - mean)/sigma    
+
 def read_images(filename, num_images):
     """ @input: filename: name of the folder where the images are stored
             num_images: number of images stored in the folder
@@ -111,10 +122,10 @@ train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
 TRAINING_SIZE = 1600
 
 
-data = read_images(train_augmented, TRAINING_SIZE)
+#data = read_images(train_augmented, TRAINING_SIZE)
 
-distance_image(train_data_norm,data,[80.68715833, 80.4653,     80.06888333])
-edges_images(train_data_filename_edges,data)
+#distance_image(train_data_norm,data,[80.68715833, 80.4653,     80.06888333])
+#edges_images(train_data_filename_edges,data)
 #rotate_images(train_data_filename_rotated_groundtruth,data_groundtruh)"""
 
 #edges_images(train_data_filename_edges,data)
