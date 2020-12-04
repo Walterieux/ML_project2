@@ -150,19 +150,19 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
     model.add(Dropout(.25))  # Avoid overfitting
 
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))
     model.add(tf.keras.layers.ReLU())
     model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
     model.add(tf.keras.layers.ReLU())
     model.add(layers.MaxPool2D((2, 2), padding='same'))
     model.add(Dropout(.25))
 
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
+    """model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
     model.add(tf.keras.layers.ReLU())
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
     model.add(tf.keras.layers.ReLU())
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.25))
+    model.add(Dropout(.25))"""
 
     model.add(layers.Flatten())
     model.add(layers.Dense(256))
@@ -284,8 +284,8 @@ def main():
     images = extract_images(train_data_filename)
     labels = extract_labels(train_labels_filename)
 
-    model = train_test_split_training(images, labels, 0.9)
-    # model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
+    # model = train_test_split_training(images, labels, 0.9)
+    model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
     model.save("saved_model")
 
 
