@@ -214,8 +214,7 @@ correct_labels = data_dir + 'correct_labels/'
 original_img = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
 
-separate_data()
 
-"""original_images = extract_images_test(original_img, 50)
+original_images = extract_images_test(original_img, 50)
 images = extract_images(test_dir)
-submission_convolution(correct_labels, images, filename_comparaison,original_images)"""
+submission_convolution(correct_labels, images, filename_comparaison,original_images)
