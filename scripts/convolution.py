@@ -139,16 +139,19 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
         threshold_matrix = np.where(summed >= 0.15, 1, 0)
         allconv = np.zeros((4, summed.shape[0], summed.shape[1]))
         # thresholds are lower for up & down and left & right as it is more likely to happen
-        thresholds = [1.3, 1.2, 1.3, 1.2]
+        #this has been suppressed as it did not work that well with the new CNN
+        """thresholds = [1.3, 1.2, 1.3, 1.2]
         for i in range(4):
             allconv[i, :, :] = signal.convolve2d(summed, convolutions_4[i, :, :], boundary='symm', mode='same')
             allconv[i, :, :] = np.where(allconv[i, :, :] >= thresholds[i], 1, 0)
             allconv[i, :, :] = np.multiply(allconv[i, :, :], threshold_matrix)
 
-        road_in_patch = np.where(np.sum(allconv, axis=0) >= 1, 1, 0)
+        #road_in_patch = np.where(np.sum(allconv, axis=0) >= 1, 1, 0)"""
+        #not that conventional, I agree but it is better such that we can use it once again
+        road_in_patch = threshold_matrix
         patch_convolution = signal.convolve2d(road_in_patch, np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]]),
                                               boundary='symm', mode='same')
-        road_in_patch = np.where(patch_convolution >= 6, 1, road_in_patch)
+        road_in_patch = np.where(patch_convolution >= 8, 1, road_in_patch)
         road_in_patch = np.where(patch_convolution == 0, 0, road_in_patch)
 
         correct_patch = reshape_higher_dim(road_in_patch, patch_size, image.shape)
