@@ -61,12 +61,17 @@ def reshape_higher_dim(patch, patch_size, image_size):
                 @image_size : tuple, size of image 
         output: return an array with size image_size which is the patch reshaped
     """
-    retour = np.zeros(image_size)
+    output_matrix = np.zeros(image_size)
     for i in range(image_size[0]//patch_size[0]):
         for j in range(image_size[1]//patch_size[1]):
-            retour[i*patch_size[0]:(i+1)*patch_size[0], j*patch_size[1]:(j+1)*patch_size[1]] = patch[i,j]
-    return retour
+            output_matrix[i*patch_size[0]:(i+1)*patch_size[0], j*patch_size[1]:(j+1)*patch_size[1]] = patch[i,j]
+    return output_matrix
 def extract_blocks(a, blocksize, keep_as_view=False):
+    """input : @matrix like 
+               @blocksize : size of a block 
+               keep_as_view : binary indicates if it is needed to reshape the matrix in 4d or in 2d 
+       output : return an array with size a.shape/blockwise 
+       """"
     M,N = a.shape
     b0, b1 = blocksize
     if keep_as_view==0:
@@ -89,7 +94,6 @@ def extract_images_test(filename, num_images):
             imgs.append(img)
     return np.asarray(imgs)
 
-    return np.asarray(imgs)
 def extract_images(image_path):
     """
     Extract all images from 'image_path'
@@ -118,9 +122,9 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
     np.put_along_axis(convolutions_4[1,:,:], np.array([[1],[1],[1]]), 1, axis=1)
     np.put_along_axis(convolutions_4[2,:,:], np.array([[2],[1],[0]]), 1, axis=1)
     convolutions_4[3,1,:] = 1
-    
+    patch_size = (16, 16)
     for number,image in enumerate(image_list):
-        reshaped = extract_blocks(image, (16,16), keep_as_view=True)
+        reshaped = extract_blocks(image, patch_size, keep_as_view=True)
         summed = np.mean(reshaped, axis=(2,3))
         threshold_matrix = np.where(summed >= 0.15,1,0)
         allconv = np.zeros((4,summed.shape[0],summed.shape[1]))
@@ -129,7 +133,7 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
         for i in range(4):
             allconv[i,:,:] = signal.convolve2d(summed, convolutions_4[i,:,:], boundary='symm', mode='same')
             allconv[i,:,:] = np.where(allconv[i,:,:] >= thresholds[i], 1, 0)
-            allconv[i,:,:] =np.multiply( allconv[i,:,:] , threshold_matrix)
+            allconv[i,:,:] = np.multiply( allconv[i,:,:] , threshold_matrix)
             
         
         road_in_patch = np.where(np.sum(allconv, axis=0) >=1 , 1, 0)
@@ -137,8 +141,8 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
         road_in_patch = np.where(patch_convolution>=6, 1, road_in_patch)
         road_in_patch = np.where(patch_convolution==0, 0, road_in_patch)
         
-
-        correct_patch = reshape_higher_dim(road_in_patch , (16,16), image.shape)
+        
+        correct_patch = reshape_higher_dim(road_in_patch , patch_size, image.shape)
         
         save_comparaison(original_images[number], image, correct_patch, filename_comparaison,number+1)
         save_img(filename,correct_patch , number+1)
@@ -179,9 +183,9 @@ def save_comparaison(original_image, image, correct_patch, filename_comparaison,
     plt.subplot(224)
     plt.imshow(correct_patch,cmap=plt.cm.gray)
     plt.title("after threshold and convolution",fontsize=10)
-    tosave= filename_comparaison + "comparaison_%1.d" % number +".png"
+    to_save= filename_comparaison + "comparaison_%1.d" % number +".png"
     fig = plt.gcf()
-    fig.savefig(tosave,dpi=300)
+    fig.savefig(to_save,dpi=300)
     plt.close(fig)
 data_dir = '../data/'
 test_dir = data_dir + 'test_set_labels/'
