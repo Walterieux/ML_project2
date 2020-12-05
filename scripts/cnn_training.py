@@ -24,7 +24,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 50
+NUM_EPOCHS = 100
 
 
 def install(package):
@@ -148,14 +148,14 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.Conv2D(64, kernel_size=(3, 3)))
     model.add(tf.keras.layers.ReLU())
     model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
-    model.add(Dropout(.25))  # Avoid overfitting
+    model.add(Dropout(.3))  # Avoid overfitting
 
-    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))
+    model.add(layers.Conv2D(32, kernel_size=(4, 4), strides=(2, 2), padding='same'))  # 128 before
     model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(layers.Conv2D(32, kernel_size=(3, 3), padding='same'))
     model.add(tf.keras.layers.ReLU())
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.25))
+    model.add(Dropout(.3))
 
     """model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
     model.add(tf.keras.layers.ReLU())
