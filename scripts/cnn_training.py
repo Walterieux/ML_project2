@@ -17,6 +17,8 @@ from sklearn.model_selection import train_test_split, KFold
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
 
+import scripts.create_submission_groundtruth
+
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
@@ -24,11 +26,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 60
-
-
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+NUM_EPOCHS = 100
 
 
 def extract_images(image_path):
@@ -66,7 +64,7 @@ def create_patches(data, patch_shape):
     imgs = []
     for i in range(data.shape[0]):
         if len(patch_shape) == 3:  # RGB images
-            patches = patchify(data[i], patch_shape, step=patch_shape[0])  # TODO change step to have context border: ex step=patch_shape[0] - border
+            patches = patchify(data[i], patch_shape, step=patch_shape[0])
             patches = patches.reshape((-1, patch_shape[0], patch_shape[1], patch_shape[2]))
             imgs.extend(patches)
         else:
@@ -137,7 +135,6 @@ def train_model(train_images, test_images, train_labels, test_labels):
     # literature https://www.kdnuggets.com/2017/11/understanding-deep-convolutional-neural-networks-tensorflow-keras.html/2
     # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
 
-    #
     # https://www.learnopencv.com/understanding-alexnet/ dropout 0.5
 
     """ ~ Model from Stanford University: https://youtu.be/bNb2fEVKeEo?t=3683"""
@@ -150,7 +147,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
     model.add(Dropout(.50))  # Avoid overfitting
 
-    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))  # 128 before
+    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))
     model.add(tf.keras.layers.ReLU())
     model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
     model.add(tf.keras.layers.ReLU())
@@ -169,10 +166,10 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(layers.Dense(1024))
     model.add(tf.keras.layers.ReLU())
     model.add(Dropout(.5))
-    #model.add(Dropout(.5))
-    #model.add(layers.Dense(1024))
-    #model.add(tf.keras.layers.ReLU())
-    #model.add(Dropout(.5))
+    # model.add(Dropout(.5))
+    # model.add(layers.Dense(1024))
+    # model.add(tf.keras.layers.ReLU())
+    # model.add(Dropout(.5))
     model.add(layers.Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adamax',
@@ -194,6 +191,13 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.legend()
     plt.show()
 
+    training_test_predicted_labels = model.predict(patches_test_images)
+    unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
+                                                                            test_images.shape[0],
+                                                                            img_shape)
+    scripts.create_submission_groundtruth.save_labels(unpatched_labels,
+                                                      "../data/training_test/data_augmented_predicted_labels/")
+
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
     return model, test_loss, test_acc
@@ -203,7 +207,7 @@ def cross_validation_training(images, labels, num_folds):
     """
     Train model with cross validation
 
-    Returns the two models with the best accuracy over the testing set
+    Returns the model with the best accuracy over the testing set
     """
 
     acc_per_fold = []
@@ -239,7 +243,7 @@ def train_test_split_training(images, labels, test_size):
     Train the model with a simple split of the data:
     test_size of data is used for testing and 1 - test_size is used for training
 
-    Returns the two models
+    Returns the model
     """
 
     # Split data
@@ -258,9 +262,7 @@ def train_test_split_training(images, labels, test_size):
 
 def main():
     start = time.time()
-    need_to_train = True
 
-    install("patchify")
     data_dir = '../data/'
     train_data_filename = data_dir + 'training/images/'
     train_labels_filename = data_dir + 'training/groundtruth/'
@@ -272,24 +274,15 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    # Retrieve images/groundtruths
-    # images = extract_images(train_data_filename)
-    # labels = extract_labels(train_labels_filename)
-    # norm = extract_images(train_data_filename_norm)[:, :, :, None]
-    # edges = extract_images(train_data_filename_edges)[:, :, :, None]
-
     train_images = extract_images(training_training_data_path)
     test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
 
-    images = extract_images(train_data_filename)
-    labels = extract_labels(train_labels_filename)
 
     # model = train_test_split_training(images, labels, 0.9)
     model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
     model.save("saved_model")
-
 
     end = time.time()
     print("Computation time: ", end - start)
