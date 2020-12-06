@@ -153,7 +153,7 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
 
 
         correct_patch = reshape_higher_dim(road_in_patch , patch_size, image.shape)
-        if comparaison: 
+        if comparaison:
             save_comparaison(original_images[number], image, correct_patch, filename_comparaison,number+1)
         save_img(filename,correct_patch , number+1)
 

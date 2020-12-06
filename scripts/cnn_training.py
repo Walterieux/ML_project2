@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import ipykernel
+import matplotlib.pyplot as plt
 import time
 import imageio
 import glob
@@ -14,7 +15,9 @@ from patchify import patchify, unpatchify
 from sklearn.model_selection import train_test_split, KFold
 
 from tensorflow.keras import layers, models
-from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU
+from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
+
+import scripts.create_submission_groundtruth
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -23,12 +26,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS_MODEL1 = 10
-NUM_EPOCHS_MODEL2 = 40
-
-
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+NUM_EPOCHS = 100
 
 
 def extract_images(image_path):
@@ -118,7 +116,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     """
     Train a predefined model with the given data
 
-    Returns the two models, accuracy over the test data, loss over the test data
+    Returns the model, accuracy over the test data, loss over the test data
     """
 
     # create mini_patches
@@ -132,106 +130,90 @@ def train_model(train_images, test_images, train_labels, test_labels):
     patches_test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
 
     # First model
-    model1 = models.Sequential()
+    model = models.Sequential()
 
+    # literature https://www.kdnuggets.com/2017/11/understanding-deep-convolutional-neural-networks-tensorflow-keras.html/2
     # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
-    model1.add(
-        layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same',
-                      input_shape=(img_patch_size, img_patch_size, 3)))
-    model1.add(layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
-    model1.add(layers.MaxPool2D((2, 2)))
-    model1.add(Dropout(0.20))  # Avoid overfitting
 
-    model1.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'))
-    model1.add(layers.Conv2D(64, kernel_size=(3, 3), activation='relu'))
-    model1.add(layers.MaxPool2D((2, 2)))
-    model1.add(Dropout(0.20))
+    # https://www.learnopencv.com/understanding-alexnet/ dropout 0.5
 
-    model1.add(layers.Flatten())
-    model1.add(layers.Dense(128, activation='relu'))
-    model1.add(layers.Dense(1, activation='sigmoid'))
+    """ ~ Model from Stanford University: https://youtu.be/bNb2fEVKeEo?t=3683"""
+    model.add(
+        layers.Conv2D(64, kernel_size=(3, 3), padding='same',
+                      input_shape=(img_patch_size, img_patch_size, 3)))  # TODO change this
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(64, kernel_size=(3, 3)))
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
+    model.add(Dropout(.50))  # Avoid overfitting
 
-    model1.compile(optimizer='adam',
-                   loss='binary_crossentropy',
-                   metrics=['binary_accuracy'])
+    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
+    model.add(Dropout(.50))
 
-    model1.fit(patches_train_images, patches_train_labels, epochs=NUM_EPOCHS_MODEL1)
+    """model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.MaxPool2D((2, 2), padding='same'))
+    model.add(Dropout(.25))"""
 
-    model1.evaluate(patches_test_images, patches_test_labels)
+    model.add(layers.Flatten())
+    model.add(Dropout(.5))
+    model.add(layers.Dense(1024))
+    model.add(tf.keras.layers.ReLU())
+    model.add(Dropout(.5))
+    # model.add(Dropout(.5))
+    # model.add(layers.Dense(1024))
+    # model.add(tf.keras.layers.ReLU())
+    # model.add(Dropout(.5))
+    model.add(layers.Dense(1, activation='sigmoid'))
 
-    predicted_train_labels = model1.predict(patches_train_images)
-    predicted_train_labels = predicted_train_labels.reshape(-1, int(img_shape[0] / img_patch_size),
-                                                            int(img_shape[1] / img_patch_size))
+    model.compile(optimizer='adamax',
+                  loss='binary_crossentropy',
+                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
 
-    print("predicted_train labels shape: ", predicted_train_labels.shape)
+    history = model.fit(patches_train_images,
+                        patches_train_labels,
+                        batch_size=512,
+                        epochs=NUM_EPOCHS,
+                        validation_data=(patches_test_images, patches_test_labels))
 
-    # Second model
-    model2 = models.Sequential()
+    plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
+    plt.plot(history.history['val_binary_accuracy'], 'r', label="accuracy on validation set")
+    plt.grid(True)
+    plt.title('Training Accuracy vs. Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.show()
 
-    model2.add(
-        layers.Conv2D(256, kernel_size=(4, 4), strides=(4, 4), activation='relu', padding='same',
-                      input_shape=(int(img_shape[0] / img_patch_size), int(img_shape[1] / img_patch_size), 1)))
+    training_test_predicted_labels = model.predict(patches_test_images)
+    unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
+                                                                            test_images.shape[0],
+                                                                            img_shape)
+    scripts.create_submission_groundtruth.save_labels(unpatched_labels,
+                                                      "../data/training_test/data_augmented_predicted_labels/")
 
-    model2.add(layers.Conv2D(256, kernel_size=(4, 4), strides=(4, 4), activation='relu'))
-    model2.add(layers.AvgPool2D((2, 2), padding='same'))
-    model2.add(Dropout(0.30))
+    test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
-    model2.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(4, 4), activation='relu', padding='same'))
-    model2.add(layers.AvgPool2D((2, 2), padding='same'))
-    model2.add(Dropout(0.30))
-
-    model2.add(layers.Flatten())
-    model2.add(layers.Dense(64, activation='relu'))
-    model2.add(layers.Dense(img_shape[0] * img_shape[1], activation='sigmoid'))
-
-    model2.compile(optimizer='adam',
-                   loss='binary_crossentropy',
-                   metrics=['binary_accuracy'])
-
-    # Use the predicted result with model1 to train model2
-    pred_tr_lab_shape = predicted_train_labels.shape
-    print("pred_tr_lab_shape: ", pred_tr_lab_shape)
-    tr_lab_shape = train_labels.shape
-    print("tr_lab_shape: ", tr_lab_shape)
-    model2.fit(
-        predicted_train_labels.reshape((pred_tr_lab_shape[0], pred_tr_lab_shape[1], pred_tr_lab_shape[2], 1)),
-        train_labels.reshape(tr_lab_shape[0], -1),
-        epochs=NUM_EPOCHS_MODEL2)
-
-    predicted_test_labels = model1.predict(patches_test_images)
-    predicted_test_labels = predicted_test_labels.reshape(-1, int(img_shape[0] / img_patch_size),
-                                                          int(img_shape[1] / img_patch_size))
-
-    pred_te_lab_shape = predicted_test_labels.shape
-    predicted_test_labels = predicted_test_labels.reshape(
-        (pred_te_lab_shape[0], pred_te_lab_shape[1], pred_te_lab_shape[2], 1))
-    predicted_labels = model2.predict(predicted_test_labels)
-    predicted_labels = predicted_labels.reshape((predicted_labels.shape[0], img_shape[0], img_shape[1], 1))
-    print("predicted_labels shape: ", predicted_labels.shape)
-
-    test_loss, test_acc = model2.evaluate(predicted_test_labels, test_labels.reshape((test_labels.shape[0], -1)))
-
-    represent_predicted_labels(test_labels[0],
-                               predicted_test_labels[0].repeat(img_patch_size, axis=0).repeat(img_patch_size,
-                                                                                              axis=1).reshape(
-                                   img_shape),
-                               predicted_labels[0].reshape(img_shape))
-
-    return model1, model2, test_loss, test_acc
+    return model, test_loss, test_acc
 
 
 def cross_validation_training(images, labels, num_folds):
     """
     Train model with cross validation
 
-    Returns the two models with the best accuracy over the testing set
+    Returns the model with the best accuracy over the testing set
     """
 
     acc_per_fold = []
     loss_per_fold = []
     best_accuracy = 0
-    best_model1 = None
-    best_model2 = None
+    best_model = None
 
     kfold = KFold(n_splits=num_folds, shuffle=True)
     for train_index, test_index in kfold.split(images, labels):
@@ -242,19 +224,18 @@ def cross_validation_training(images, labels, num_folds):
         train_labels = labels[train_index]
         test_labels = labels[test_index]
 
-        model1, model2, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
+        model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
 
         if test_acc > best_accuracy:
             best_accuracy = test_acc
-            best_model1 = model1
-            best_model2 = model2
+            best_model = model
 
         acc_per_fold.append(test_acc)
         loss_per_fold.append(test_loss)
     print("Mean accuracy = ", np.mean(acc_per_fold), " accuracy variance: ", np.var(acc_per_fold))
     print("Mean loss = ", np.mean(loss_per_fold), " loss variance: ", np.var(loss_per_fold))
 
-    return best_model1, best_model2
+    return best_model
 
 
 def train_test_split_training(images, labels, test_size):
@@ -262,7 +243,7 @@ def train_test_split_training(images, labels, test_size):
     Train the model with a simple split of the data:
     test_size of data is used for testing and 1 - test_size is used for training
 
-    Returns the two models
+    Returns the model
     """
 
     # Split data
@@ -270,38 +251,38 @@ def train_test_split_training(images, labels, test_size):
                                                                             labels,
                                                                             test_size=test_size,
                                                                             shuffle=True)
-    model1, model2, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
+
+    model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
 
     print("Accuracy = ", test_acc)
     print("Loss = ", test_loss)
 
-    return model1, model2
+    return model
 
 
 def main():
     start = time.time()
-    need_to_train = True
 
-    install("patchify")
     data_dir = '../data/'
-    train_data_filename = data_dir + 'training/data_augmented/'
-    train_labels_filename = data_dir + 'training/data_augmented_groundtruth/'
+    train_data_filename = data_dir + 'training/images/'
+    train_labels_filename = data_dir + 'training/groundtruth/'
+    train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
+    train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
 
-    # Retrieve images/groundtruths
-    images = extract_images(train_data_filename)
-    print("images shape: ", images.shape)
-    labels = extract_labels(train_labels_filename)
-    print("labels shape: ", labels.shape)
+    training_training_data_path = data_dir + 'training_training/data_augmented'
+    training_training_labels_path = data_dir + 'training_training/data_augmented_groundtruth'
+    training_test_data_path = data_dir + 'training_test/data_augmented'
+    training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    if need_to_train:
-        model1, model2 = train_test_split_training(images, labels, 0.1)
-        # model1.save("saved_model1")
-        # model2.save("saved_model2")
-    else:
-        model1 = keras.models.load_model("saved_model1")
-        model2 = keras.models.load_model("saved_model2")
+    train_images = extract_images(training_training_data_path)
+    test_images = extract_images(training_test_data_path)
+    train_labels = extract_labels(training_training_labels_path)
+    test_labels = extract_labels(training_test__labels_path)
 
-    # TODO create a function to predict values using the two models
+
+    # model = train_test_split_training(images, labels, 0.9)
+    model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
+    model.save("saved_model")
 
     end = time.time()
     print("Computation time: ", end - start)
