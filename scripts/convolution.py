@@ -57,9 +57,9 @@ def extract_img_from_list(filename, list_of_number):
 
 
 def reshape_higher_dim(patch, patch_size, image_size):
-    """ input : @patch : array like, patch of image 
-                @patch_size : tuple, size of patch 
-                @image_size : tuple, size of image 
+    """ input : @patch : array like, patch of image
+                @patch_size : tuple, size of patch
+                @image_size : tuple, size of image
         output: return an array with size image_size which is the patch reshaped
     """
 
@@ -72,10 +72,10 @@ def reshape_higher_dim(patch, patch_size, image_size):
 
 
 def extract_blocks(a, blocksize, keep_as_view=False):
-    """input : @matrix like 
-               @blocksize : size of a block 
-               keep_as_view : binary indicates if it is needed to reshape the matrix in 4d or in 2d 
-       output : return an array with size a.shape/blockwise 
+    """input : @matrix like
+               @blocksize : size of a block
+               keep_as_view : binary indicates if it is needed to reshape the matrix in 4d or in 2d
+       output : return an array with size a.shape/blockwise
     """
 
     M, N = a.shape
@@ -120,10 +120,10 @@ def extract_images(image_path):
 
 def submission_convolution(filename, image_list, filename_comparaison, original_images):
     """input : @filename : where to store the images
-    #        @image_list : list of images after CNN 
+    #        @image_list : list of images after CNN
     #        @filename_comparaison : where to store the images compared
     #        @original_images : list of images before CNN
-    #        
+    #
     #output : apply convolution to and threshold to  each image of image_list to know if road or not. store the images in filename """
 
     # four types of convolutions  left up & left right ,up & down, left down & right up , left & right
@@ -181,7 +181,7 @@ def save_comparaison(original_image, image, correct_patch, filename_comparaison,
     #        @image : array like (after CNN)
     #        @correct_patch array like after  convolution
     #        @filename_comparaison : where to store the comparaison image
-    #        @number : int index 
+    #        @number : int index
     #output : store the comparaision image with index number in filename_comparaison"""
 
     plt.figure()
