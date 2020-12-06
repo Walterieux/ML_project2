@@ -12,6 +12,17 @@ import os
 import imageio
 
 
+def center_by_image(list_of_image):
+    """
+    @input : list_of_image : array like
+    @output : return a numpy array where image is centered 
+    """
+    centered_image = np.zeros(list_of_image.shape)
+    for number, image in enumerate(list_of_image):
+        mean = np.mean(image , axis =(0, 1))
+        std = np.std(image, axis =(0,1))
+        centered_image[number] = (image -mean)/std
+    return centered_image
 def center(list_of_image, sigma=None, mean=None, still_to_center=True):
     """
     @input : @list_of_image : array like [n,m,l,3]

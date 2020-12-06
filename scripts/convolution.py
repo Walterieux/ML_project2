@@ -57,9 +57,9 @@ def extract_img_from_list(filename, list_of_number):
 
 
 def reshape_higher_dim(patch, patch_size, image_size):
-    """ input : @patch : array like, patch of image 
-                @patch_size : tuple, size of patch 
-                @image_size : tuple, size of image 
+    """ input : @patch : array like, patch of image
+                @patch_size : tuple, size of patch
+                @image_size : tuple, size of image
         output: return an array with size image_size which is the patch reshaped
     """
 
@@ -72,10 +72,10 @@ def reshape_higher_dim(patch, patch_size, image_size):
 
 
 def extract_blocks(a, blocksize, keep_as_view=False):
-    """input : @matrix like 
-               @blocksize : size of a block 
-               keep_as_view : binary indicates if it is needed to reshape the matrix in 4d or in 2d 
-       output : return an array with size a.shape/blockwise 
+    """input : @matrix like
+               @blocksize : size of a block
+               keep_as_view : binary indicates if it is needed to reshape the matrix in 4d or in 2d
+       output : return an array with size a.shape/blockwise
     """
 
     M, N = a.shape
@@ -103,7 +103,7 @@ def extract_images_test(filename, num_images):
     return np.asarray(imgs)
 
 
-def extract_images(image_path):
+def extract_images(image_path, divide_by255=True):
     """
     Extract all images from 'image_path'
     All values are between 0 and 1
@@ -118,12 +118,12 @@ def extract_images(image_path):
     return np.asarray(imgs)
 
 
-def submission_convolution(filename, image_list, filename_comparaison, original_images):
+def submission_convolution(filename, image_list, filename_comparaison, original_images, comparaison=False):
     """input : @filename : where to store the images
-    #        @image_list : list of images after CNN 
+    #        @image_list : list of images after CNN
     #        @filename_comparaison : where to store the images compared
     #        @original_images : list of images before CNN
-    #        
+    #
     #output : apply convolution to and threshold to  each image of image_list to know if road or not. store the images in filename """
 
     # four types of convolutions  left up & left right ,up & down, left down & right up , left & right
@@ -135,37 +135,32 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
     patch_size = (16, 16)
     for number, image in enumerate(image_list):
         reshaped = extract_blocks(image, patch_size, keep_as_view=True)
-        summed = np.mean(reshaped, axis=(2, 3))
-        threshold_matrix = np.where(summed >= 0.15, 1, 0)
-        allconv = np.zeros((4, summed.shape[0], summed.shape[1]))
-        # thresholds are lower for up & down and left & right as it is more likely to happen
-        #this has been suppressed as it did not work that well with the new CNN
-        """thresholds = [1.3, 1.2, 1.3, 1.2]
+        summed = np.mean(reshaped, axis=(2,3))
+        threshold_matrix = np.where(summed >= 0.25,1,0)
+        allconv = np.zeros((4,summed.shape[0],summed.shape[1]))
+        #thresholds are lower for up & down and left & right as it is more likely to happen
+        thresholds=[0.9,0.9,0.9,0.9]
         for i in range(4):
-            allconv[i, :, :] = signal.convolve2d(summed, convolutions_4[i, :, :], boundary='symm', mode='same')
-            allconv[i, :, :] = np.where(allconv[i, :, :] >= thresholds[i], 1, 0)
-            allconv[i, :, :] = np.multiply(allconv[i, :, :], threshold_matrix)
+            allconv[i,:,:] = signal.convolve2d(summed, convolutions_4[i,:,:], boundary='symm', mode='same')
+            allconv[i,:,:] = np.where(allconv[i,:,:] >= thresholds[i], 1, 0)
+            allconv[i,:,:] = np.multiply( allconv[i,:,:] , threshold_matrix)
 
-        #road_in_patch = np.where(np.sum(allconv, axis=0) >= 1, 1, 0)"""
-        #not that conventional, I agree but it is better such that we can use it once again
         road_in_patch = threshold_matrix
-        patch_convolution = signal.convolve2d(road_in_patch, np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]]),
-                                              boundary='symm', mode='same')
-        road_in_patch = np.where(patch_convolution >= 8, 1, road_in_patch)
-        road_in_patch = np.where(patch_convolution == 0, 0, road_in_patch)
-
-        correct_patch = reshape_higher_dim(road_in_patch, patch_size, image.shape)
-
-        save_comparaison(original_images[number], image, correct_patch, filename_comparaison, number + 1)
-        save_img(filename, correct_patch, number + 1)
+        #road_in_patch = np.where(np.sum(allconv, axis=0) >=1 , 1, 0)
+        patch_convolution = signal.convolve2d(road_in_patch, np.array([[1,1,1],[1,0,1],[1,1,1]]), boundary='symm', mode='same')
+        road_in_patch = np.where(patch_convolution>=8, 1, road_in_patch)
+        road_in_patch = np.where(patch_convolution==0, 0, road_in_patch)
 
 
-def store_list_img(filename, images_list):
-    for number, image in enumerate(images_list):
-        save_img(filename, image, number + 1)
+        correct_patch = reshape_higher_dim(road_in_patch , patch_size, image.shape)
+        if comparaison: 
+            save_comparaison(original_images[number], image, correct_patch, filename_comparaison,number+1)
+        save_img(filename,correct_patch , number+1)
 
-
-def save_img(filename, image, number):
+def store_list_img(filename,images_list):
+    for number, image in enumerate(images_list) :
+        save_img(filename,image,number+1)
+def save_img(filename,image,number):
     """ @input : -filename : name of the directory where the images should be stored
                  -data_images: array of images that will be rotated from [45,90,135,..360] degrees
         @output: store the rotated images in the directory filename
@@ -184,7 +179,7 @@ def save_comparaison(original_image, image, correct_patch, filename_comparaison,
     #        @image : array like (after CNN)
     #        @correct_patch array like after  convolution
     #        @filename_comparaison : where to store the comparaison image
-    #        @number : int index 
+    #        @number : int index
     #output : store the comparaision image with index number in filename_comparaison"""
 
     plt.figure()
@@ -213,6 +208,10 @@ images = extract_images(test_dir)
 correct_labels = data_dir + 'correct_labels/'
 original_img = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
+
+
+
+#separate_data()
 
 
 original_images = extract_images_test(original_img, 50)
