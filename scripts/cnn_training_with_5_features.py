@@ -302,8 +302,9 @@ def main():
     images_norm = extract_images(train_data_filename_norm)
     images_edges = extract_images(train_data_filename_edges)
     labels = extract_labels(train_labels_filename)
-
-    new_images = np.zeros((images.shape[0],images.shape[1],images.shape[2],5))
+    images_norm = images_norm[:,:,:,None]
+    images_edges = images_edges[:,:,:,None]
+    new_images = np.zeros((images.shape[0],images.shape[1],images.shape[2],5))n
     for j in range(images.shape[0]):
         new_images[j] = np.concatenate((images[j],np.concatenate((images_norm[j,:,:,None],images_edges[j,:,:,None]),axis=2)),axis=2)
     
