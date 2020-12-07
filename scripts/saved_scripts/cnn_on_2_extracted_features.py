@@ -65,11 +65,11 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 3
+NUM_EPOCHS = 50
 # Which fraction of all available training data to take:
 DATA_PORTION = 0.5
 # Index of the ground truth for which we want to see our prediction
-IMAGE_TO_TEST_INDEX = 3
+IMAGE_TO_TEST_INDEX = 0
 
 """
 ======================================================
@@ -185,8 +185,13 @@ def predict_using_model(model, test_images):
     """
     patches_test_images = create_patches(test_images, (img_patch_size, img_patch_size, 2))
     predicted_labels = model.predict(patches_test_images)
-    predicted_labels.reshape(-1, int(img_shape[0] / img_patch_size),
+    print(predicted_labels.shape)
+    predicted_labels.reshape(int(predicted_labels.shape[0] / (int(img_shape[0] / img_patch_size) *
+                                                              int(img_shape[1] / img_patch_size))),
+                             int(img_shape[0] / img_patch_size),
                              int(img_shape[1] / img_patch_size))
+    print(predicted_labels.shape)
+    predicted_labels.repeat(img_patch_size, axis=1).repeat(img_patch_size, axis=2).reshape(img_shape, axis=1)
 
     return predicted_labels
 
@@ -198,9 +203,7 @@ def show_prediction(test_labels, predicted_labels, index):
     """
     if index < len(predicted_labels):
         represent_predicted_labels(test_labels[index],
-                                   predicted_labels[index].repeat(img_patch_size, axis=0).repeat(img_patch_size,
-                                                                                                 axis=1).reshape(
-                                       img_shape))
+                                   predicted_labels[index])
 
 
 """
@@ -214,7 +217,8 @@ def train_model(train_images, test_images, train_labels, test_labels):
     """
     Train a predefined model with the given data
 
-    Returns the two models, accuracy over the test data, loss over the test data
+    Returns the model, accuracy over the test data, loss over the test data
+    Model works on a patch
     """
 
     # create mini_patches
@@ -249,9 +253,11 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
-                  metrics=['binary_accuracy'])
+                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
 
-    history = model.fit(patches_train_images, patches_train_labels, epochs=NUM_EPOCHS)
+    history = model.fit(patches_train_images, patches_train_labels, epochs=NUM_EPOCHS,
+                        batch_size=512,
+                        validation_data=(patches_test_images, patches_test_labels))
 
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
@@ -278,9 +284,6 @@ def train_test_split_training(images, labels, test_size):
     print("Accuracy = ", test_acc)
     print("Loss = ", test_loss)
 
-    prediction = predict_using_model(model, test_images)
-    show_prediction(test_labels, prediction, IMAGE_TO_TEST_INDEX)
-
     return model, history
 
 
@@ -295,17 +298,19 @@ def main():
     start = time.time()
 
     install("patchify")
-    data_dir = '../data/'
+    data_dir = '../../data/'
     train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
-    train_data_filename_edges = data_dir + 'training/data_augmented_edges'
+    train_data_filename_distance = data_dir + 'training/data_augmented_distance/'
     train_labels_filename = data_dir + 'training/data_augmented_groundtruth/'
 
-    # Retrieve images/groundtruths
-    labels = extract_labels(train_labels_filename)
-    norm = extract_images(train_data_filename_norm)[:, :, :, None]
-    edges = extract_images(train_data_filename_edges)[:, :, :, None]
+    # Retrieve images/ground-truths
 
-    images = np.concatenate((norm, edges), axis=3)
+    norm = extract_labels(train_data_filename_norm)[:, :, :, None]
+    distance = extract_labels(train_data_filename_distance)[:, :, :, None]
+
+    images = np.concatenate((norm, distance), axis=3)
+
+    labels = extract_labels(train_labels_filename)
 
     # shrink data size
     indexes = np.arange(len(images))
