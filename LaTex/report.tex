@@ -76,6 +76,8 @@ We explored further ways of increasing the amount of input data we can feed to o
 
 One additional information we extract and feed to our CNN, is what we like to call the \textit{distance} of an image. This  \textit{distance} is the norm of the vector we obtain as a result of subtracting from every pixel's RGB value a value we call the \textit{mean road RGB color}. We compute the \textit{mean road RGB color} by averaging all RGB colors that are known to represent a piece of road, i.e. all pixels of our training set that we know to be part of a road (by looking at the ground-truth images). The \textit{distance} of an image can thus be represented as another image, of identical dimensions. It is an image that represents, at every pixel, how closely the color of the latter resembles the known color of a road. The resulting image can be fed to our CNN as additional data.
 
+However, extracting edges from images and using the image \textit{distance} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good CNN will automatically learn those features. That is why, in section \ref{ssec:technique}, we will briefly mention that we experimented with those 2 features. We will however not go into detail about implementations using these features, since the results obtained were not up to our expectations. The implementations can be found in the script \texttt{cnn\_on\_2\_extracted\_features.py}.
+
 
 \subsection{Evolution of our CNN} 
 \label{ssec:technique}

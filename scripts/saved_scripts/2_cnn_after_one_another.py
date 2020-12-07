@@ -57,7 +57,7 @@ tf.compat.v1.keras.backend.set_session(session)
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
 NUM_EPOCHS_MODEL1 = 1
-NUM_EPOCHS_MODEL2 = 4
+NUM_EPOCHS_MODEL2 = 50
 # Which fraction of all available training data to take:
 DATA_PORTION = 0.5
 # Index of the ground truth for which we want to see our prediction
@@ -254,7 +254,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     model2.compile(optimizer='adam',
                    loss='binary_crossentropy',
-                   metrics=['binary_accuracy'])
+                   metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
 
     # Use the predicted result with model1 to train model2
     pred_tr_lab_shape = predicted_train_labels.shape
@@ -264,7 +264,10 @@ def train_model(train_images, test_images, train_labels, test_labels):
     history = model2.fit(
         predicted_train_labels.reshape((pred_tr_lab_shape[0], pred_tr_lab_shape[1], pred_tr_lab_shape[2], 1)),
         train_labels.reshape(tr_lab_shape[0], -1),
-        epochs=NUM_EPOCHS_MODEL2)
+        epochs=NUM_EPOCHS_MODEL2,
+        batch_size=512,
+        validation_data=(patches_test_images, patches_test_labels)
+    )
 
     predicted_test_labels = model1.predict(patches_test_images)
     predicted_test_labels = predicted_test_labels.reshape(-1, int(img_shape[0] / img_patch_size),
