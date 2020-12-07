@@ -76,7 +76,7 @@ We explored further ways of increasing the amount of input data we can feed to o
 
 One additional information we extract and feed to our CNN, is what we like to call the \textit{distance} of an image. This  \textit{distance} is the norm of the vector we obtain as a result of subtracting from every pixel's RGB value a value we call the \textit{mean road RGB color}. We compute the \textit{mean road RGB color} by averaging all RGB colors that are known to represent a piece of road, i.e. all pixels of our training set that we know to be part of a road (by looking at the ground-truth images). The \textit{distance} of an image can thus be represented as another image, of identical dimensions. It is an image that represents, at every pixel, how closely the color of the latter resembles the known color of a road. The resulting image can be fed to our CNN as additional data.
 
-However, extracting edges from images and using the image \textit{distance} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good CNN will automatically learn those features. That is why, in section \ref{ssec:technique}, we will briefly mention that we experimented with those 2 features. We will however not go into detail about implementations using these features, since the results obtained were not up to our expectations. The implementations can be found in the script \texttt{cnn\_on\_2\_extracted\_features.py	}.
+However, extracting edges from images and using the image \textit{distance} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good CNN will automatically learn those features. That is why, do not go into detail about implementations using these features, since the results obtained were not up to our expectations. The implementations can be found in the script \texttt{cnn\_on\_2\_extracted\_features.py	}.
 
 
 \subsection{Evolution of our CNN} 
@@ -84,16 +84,25 @@ However, extracting edges from images and using the image \textit{distance} did 
 
 In the following we will discuss several CNN designs we experimented with, both successful and unsuccessful. We will also detail the design of our final CNN, showing which methods we experimented with were useful and included in our final design.
 
-Before we dive into the detailed CNN designs we developed, let us list a few general ideas we experimented with. One first such idea is to use a combination of two or more CNNs. In our case, we tried using two CNNs one after the other. The second CNN takes as input the predictions made by the model resulting from the first CNN. In this design, the second CNN mainly acts as some kind of image filter that tries to fix the mistakes made by the first CNN. In fact, 
+Before we dive into the detailed CNN designs we developed, let us list a few general ideas we experimented with. One first such idea is to use a combination of two or more CNNs. In our case, we tried using two CNNs one after the other. The second CNN takes as input the predictions made by the model resulting from the first CNN. In this design, the second CNN mainly acts as some kind of image filter that tries to fix the mistakes made by the first CNN. In fact, whereas the second CNN nicely fills missing gaps in road prediction for some images, it also creates non existing roads in the resulting predictions.
 
-\begin{equation} 
-	\label{eq1}
-	f(x) = \log{\frac{1}{1+x}}
-\end{equation}
+Another idea would be to use two or more CNNs in parallel, and for example, merge their results using another (following-up) CNN. In this case, we would need to apply those parallel CNNs on different inputs. However, as mentioned in section \ref{ssec:data_proc}, using inputs other than the images' RGB values is unnecessary, or at least not very useful in most cases. Thus, and due to the limited effect of using multiple CNNs in a row, we decided that we should stick to designing a single, well-tailored CNN for training a model.
+
+As mentioned in section \ref{ssec:data_proc}, we divide all of our images (both training and test images) into patches of smaller size. The effect of patch size
+% TODO: evaluate effect of patch size on accuacy
+Since we cannot compute our model by directly taking whole images as inputs, due to the large number of resulting parameters, we use this image segmentation method in all implementations.
+
+% TODO: CNN design
+
+% TODO: borders method
 
 
 \subsection{Model Validation} 
 \label{ssec:model_validation}
+
+To validate our model we first experimented with k-fold cross validation. However, in order to get satisfactory results from the latter method, we would need to train our model multiple times for every implementation we designed. Since for most implementations a single training round can take a few hours, comparing our models using k-fold cross validation is not an option.
+
+% TODO: how do we validate?
 
 
 \section{Results}
