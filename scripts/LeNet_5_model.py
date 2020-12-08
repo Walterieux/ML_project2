@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split, KFold
 
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
+from tensorflow_core.python.keras.optimizers import RMSprop
 
 import scripts.create_submission_groundtruth
 
@@ -26,7 +27,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 100
+NUM_EPOCHS = 10
 
 
 def extract_images(image_path):
@@ -119,12 +120,6 @@ def train_model(train_images, test_images, train_labels, test_labels):
     Returns the model, accuracy over the test data, loss over the test data
     """
 
-    nb_train = np.prod(train_labels.shape)
-    nb_test = np.prod(test_labels.shape)
-    percentage_road = (np.mean(train_labels) * nb_train + np.mean(test_labels) * nb_test) / (
-                nb_train + nb_test)
-    print("percentage road: ", percentage_road)
-
     # create mini_patches
     patches_train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
     patches_test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
@@ -135,56 +130,63 @@ def train_model(train_images, test_images, train_labels, test_labels):
     patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
     patches_test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
 
-    # First model
-    model = models.Sequential()
+    # adapt patch from (16, 16) to (32, 32) to fit into LeNET-5 TODO create a function if this works
+    patches_train_images.resize((patches_train_images.shape[0], 16, 16, 4), refcheck=False)
+    patches_train_images = patches_train_images.reshape((patches_train_images.shape[0], 32, 32, 1))
 
-    # literature https://www.kdnuggets.com/2017/11/understanding-deep-convolutional-neural-networks-tensorflow-keras.html/2
-    # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
+    patches_test_images.resize((patches_test_images.shape[0], 16, 16, 4), refcheck=False)
+    patches_test_images = patches_test_images.reshape((patches_test_images.shape[0], 32, 32, 1))
+    """
+    new_patches = []
+    flat_patch = None
+    for ind, patch in enumerate(patches_train_images):
+        flat_patch = np.zeros((32, 32, 1))
+        flat_patch[0:16, 0:16] = patch[:, :, 0][:, :, None]
+        flat_patch[16:32, 0:16] = patch[:, :, 1][:, :, None]
+        flat_patch[0:16, 16:32] = patch[:, :, 2][:, :, None]
+        new_patches.append(flat_patch)
 
-    # https://www.learnopencv.com/understanding-alexnet/ dropout 0.5
+    patches_train_images = np.asarray(new_patches)
 
-    """ ~ Model from Stanford University: https://youtu.be/bNb2fEVKeEo?t=3683"""
-    model.add(
-        layers.Conv2D(64, kernel_size=(3, 3), padding='same',
-                      input_shape=(img_patch_size, img_patch_size, 3)))  # TODO change this
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(64, kernel_size=(3, 3)))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
-    model.add(Dropout(.50))  # Avoid overfitting
+    new_patches = []
+    for ind, patch in enumerate(patches_test_images):
+        flat_patch = np.zeros((32, 32, 1))
+        flat_patch[0:16, 0:16] = patch[:, :, 0][:, :, None]
+        flat_patch[16:32, 0:16] = patch[:, :, 1][:, :, None]
+        flat_patch[0:16, 16:32] = patch[:, :, 2][:, :, None]
+        new_patches.append(flat_patch)
 
-    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
-    model.add(Dropout(.50))
+    patches_train_images = np.asarray(new_patches)
 
-    """model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.25))"""
+    for ind, patch in enumerate(patches_test_images):
+        patches_test_images[ind] = patch.repeat(2, axis=0).repeat(2, axis=1)
+        
+    """
+
+    # https://medium.com/@mgazar/lenet-5-in-9-lines-of-code-using-keras-ac99294c8086
+    model = keras.Sequential()
+
+    model.add(layers.Conv2D(filters=6, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 1)))
+    model.add(layers.AveragePooling2D())
+
+    model.add(layers.Conv2D(filters=16, kernel_size=(3, 3), activation='relu'))
+    model.add(layers.AveragePooling2D())
 
     model.add(layers.Flatten())
-    model.add(Dropout(.5))
-    model.add(layers.Dense(1024))
-    model.add(tf.keras.layers.ReLU())
-    model.add(Dropout(.5))
-    # model.add(Dropout(.5))
-    # model.add(layers.Dense(1024))
-    # model.add(tf.keras.layers.ReLU())
-    # model.add(Dropout(.5))
-    model.add(layers.Dense(1, activation='sigmoid'))
 
-    model.compile(optimizer='adamax',
+    model.add(layers.Dense(units=120, activation='relu'))
+
+    model.add(layers.Dense(units=84, activation='relu'))
+
+    model.add(layers.Dense(units=1, activation='sigmoid'))
+
+    model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=0.001),
                   loss='binary_crossentropy',
-                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
+                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=20)])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=512,
+                        batch_size=128,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
 
@@ -284,7 +286,6 @@ def main():
     test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
-
 
     # model = train_test_split_training(images, labels, 0.9)
     model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)

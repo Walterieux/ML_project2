@@ -77,8 +77,9 @@ def create_patches(data, patch_shape):
     return np.asarray(imgs)
 
 
-def characterise_each_patch_as_road_or_not(labels):
+def characterise_each_patch_as_road_or_not(labels):  # MODIFIED!
     """
+    # TODO: definition deprecated!
     Binary classification for each patches, a patch is considered as a road if
     he has more than 50% road on it
 
@@ -88,9 +89,11 @@ def characterise_each_patch_as_road_or_not(labels):
         array of patches
     """
 
-    new_labels = np.zeros((labels.shape[0]))
+    new_labels = np.zeros((labels.shape[0], 2))
     for i in range(labels.shape[0]):
-        new_labels[i] = 1 if np.count_nonzero(labels[i]) > labels[i].shape[0] / 2 else 0
+        percentage_road = np.count_nonzero(labels[i]) > labels[i].shape[0] / 2
+        new_labels[i][0] = percentage_road
+        new_labels[i][1] = 1 - percentage_road
 
     return new_labels
 
@@ -176,11 +179,11 @@ def train_model(train_images, test_images, train_labels, test_labels):
     # model.add(layers.Dense(1024))
     # model.add(tf.keras.layers.ReLU())
     # model.add(Dropout(.5))
-    model.add(layers.Dense(1, activation='sigmoid'))
+    model.add(layers.Dense(2, activation='softmax'))
 
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
-                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
+                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,

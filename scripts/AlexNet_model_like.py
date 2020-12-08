@@ -119,12 +119,6 @@ def train_model(train_images, test_images, train_labels, test_labels):
     Returns the model, accuracy over the test data, loss over the test data
     """
 
-    nb_train = np.prod(train_labels.shape)
-    nb_test = np.prod(test_labels.shape)
-    percentage_road = (np.mean(train_labels) * nb_train + np.mean(test_labels) * nb_test) / (
-                nb_train + nb_test)
-    print("percentage road: ", percentage_road)
-
     # create mini_patches
     patches_train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
     patches_test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
@@ -180,7 +174,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
-                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
+                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
