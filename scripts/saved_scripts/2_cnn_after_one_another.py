@@ -4,7 +4,7 @@
 ======================================================
 DESCRIPTION:
 This script contains the code for running and evaluating
-the training of a a model resulting from 2 CNNs trained
+the training of a model resulting from 2 CNNs trained
 one after the other. The 2nd CNN takes as input the result
 from evaluating (predicting) using the 1st CNN. The 1st CNN
 takes simply the image values as an input.
@@ -68,10 +68,6 @@ IMAGE_TO_TEST_INDEX = 0
 =====================FUNCTIONS========================
 ======================================================
 """
-
-
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 
 def extract_images(image_path):
@@ -322,8 +318,6 @@ def train_test_split_training(images, labels, test_size):
 
 def main():
     start = time.time()
-
-    install("patchify")
 
     data_dir = '../../data/'
     train_data_filename = data_dir + 'training/data_augmented/'

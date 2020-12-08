@@ -78,10 +78,6 @@ DATA_PORTION = 0.5
 """
 
 
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-
 def extract_images(image_path):
     """
     Extract all images from 'image_path'
@@ -257,7 +253,6 @@ def train_test_split_training(images, labels, test_size):
 def main():
     start = time.time()
 
-    install("patchify")
     data_dir = '../../data/'
     train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
     train_data_filename_distance = data_dir + 'training/data_augmented_distance/'
