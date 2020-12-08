@@ -26,7 +26,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 
 def extract_images(image_path):
@@ -147,36 +147,61 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(
         layers.Conv2D(64, kernel_size=(3, 3), padding='same',
                       input_shape=(img_patch_size, img_patch_size, 3)))  # TODO change this
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(64, kernel_size=(3, 3)))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
-    model.add(Dropout(.50))  # Avoid overfitting
-
-    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
-    model.add(Dropout(.50))
-
-    """model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
+    """
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7873262
+    Batch Normalization Layer:The batch normalization (BN)was  introduced by  Ioffe  and  Szegedy  [43]  to  avoid  
+    gradient vanishing  and  reduce  internal  covariate  shift  (the  change  in the input distribution to a learning 
+    system).
+    """
+    model.add(keras.layers.BatchNormalization())
     model.add(tf.keras.layers.ReLU())
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
+    # http://mipal.snu.ac.kr/images/1/16/Dropout_ACCV2016.pdf
+    model.add(Dropout(.10))  # Avoid overfitting
+
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    # model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
+    model.add(layers.MaxPool2D((2, 2),  padding='same'))
+    model.add(Dropout(.10))
+
+    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
     model.add(tf.keras.layers.ReLU())
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.25))"""
+    model.add(Dropout(.10))
 
     model.add(layers.Flatten())
-    model.add(Dropout(.5))
-    model.add(layers.Dense(1024))
+    # model.add(Dropout(.5))
+    model.add(layers.Dense(512))
     model.add(tf.keras.layers.ReLU())
     model.add(Dropout(.5))
-    # model.add(Dropout(.5))
+    model.add(layers.Dense(512))
+    model.add(tf.keras.layers.ReLU())
+    model.add(Dropout(.5))
+
     # model.add(layers.Dense(1024))
     # model.add(tf.keras.layers.ReLU())
     # model.add(Dropout(.5))
     model.add(layers.Dense(1, activation='sigmoid'))
+
+    model.summary()
 
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
@@ -184,7 +209,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=512,
+                        batch_size=128,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
 
