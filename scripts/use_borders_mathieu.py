@@ -79,29 +79,37 @@ def create_patches(data, patch_shape):
     return np.asarray(imgs)
 
 
+def add_border(image, border):
+    """
+    Adds a black border of size border to a given image
+    """
+    out = np.zeros((image.shape[0] + (border*2), image.shape[1] + (border*2), 3), dtype=image.dtype)
+    for x in range(image.shape[0] + (border*2)):
+        for y in range(image.shape[1] + (border*2)):
+            if x < border or x >= border + image.shape[0] or y < border or y >= border + image.shape[1]:
+                out[x][y] = 0.0
+            else:
+                out[x][y] = image[x - border][y - border]
+    return out
+
+
 def create_patches_with_border(data, patch_shape, border):
     """separate image into patches, data is a collection of images"""
 
     imgs = []
     for i in range(data.shape[0]):
         # Add border to whole image
-        image_data = data[i]
-        image_data = image_data * 255
-        image_data = np.uint8(image_data)
-        img = Image.fromarray(image_data.astype(np.uint8))
-        img = ImageOps.expand(img, border=border, fill=0)
-        data = np.asarray(img.astype('float32'))
-        data = data / 255.0
+        img = add_border(data[i], border)
         # Split image
         if len(patch_shape) == 3:  # RGB images
-            patches = patchify(data, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
+            patches = patchify(img, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
                                step=patch_shape[0])
-            patches = patches.reshape((-1, patch_shape[0], patch_shape[1], patch_shape[2]))
+            patches = patches.reshape((-1, patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]))
             imgs.extend(patches)
         else:
-            patches = patchify(data, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
+            patches = patchify(img, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
                                step=patch_shape[0])
-            patches = patches.reshape((-1, patch_shape[0], patch_shape[1]))
+            patches = patches.reshape((-1, patch_shape[0] + (border * 2), patch_shape[1] + (border * 2)))
             number_of_patches = patches.shape[0]
             patches = patches.reshape((number_of_patches, -1))
             imgs.extend(patches)
