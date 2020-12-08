@@ -84,14 +84,22 @@ def create_patches_with_border(data, patch_shape, border):
 
     imgs = []
     for i in range(data.shape[0]):
-        img = ImageOps.expand(data[i], border=0, fill=0)
+        # Add border to whole image
+        image_data = data[i]
+        image_data = image_data * 255
+        image_data = np.uint8(image_data)
+        img = Image.fromarray(image_data.astype(np.uint8))
+        img = ImageOps.expand(img, border=border, fill=0)
+        data = np.asarray(img.astype('float32'))
+        data = data / 255.0
+        # Split image
         if len(patch_shape) == 3:  # RGB images
-            patches = patchify(img, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
+            patches = patchify(data, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
                                step=patch_shape[0])
             patches = patches.reshape((-1, patch_shape[0], patch_shape[1], patch_shape[2]))
             imgs.extend(patches)
         else:
-            patches = patchify(img[i], (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
+            patches = patchify(data, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
                                step=patch_shape[0])
             patches = patches.reshape((-1, patch_shape[0], patch_shape[1]))
             number_of_patches = patches.shape[0]
