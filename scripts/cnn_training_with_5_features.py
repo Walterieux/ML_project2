@@ -23,7 +23,6 @@ from sklearn.model_selection import train_test_split, KFold
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU
 
-
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
@@ -302,15 +301,16 @@ def main():
     images_norm = extract_images(train_data_filename_norm)
     images_edges = extract_images(train_data_filename_edges)
     labels = extract_labels(train_labels_filename)
-    images_norm = images_norm[:,:,:,None]
-    images_edges = images_edges[:,:,:,None]
-    new_images = np.zeros((images.shape[0],images.shape[1],images.shape[2],5))n
+    images_norm = images_norm[:, :, :, None]
+    images_edges = images_edges[:, :, :, None]
+    new_images = np.zeros((images.shape[0], images.shape[1], images.shape[2], 5))
     for j in range(images.shape[0]):
-        new_images[j] = np.concatenate((images[j],np.concatenate((images_norm[j,:,:,None],images_edges[j,:,:,None]),axis=2)),axis=2)
-    
+        new_images[j] = np.concatenate(
+            (images[j], np.concatenate((images_norm[j, :, :, None], images_edges[j, :, :, None]), axis=2)), axis=2)
+
     print("labels shape: ", labels.shape)
     print("new images : ", new_images.shape)
-    print("images shape : " , images.shape)
+    print("images shape : ", images.shape)
     if need_to_train:
         model1, model2 = train_test_split_training(new_images, labels, 0.1)
         # model1.save("saved_model1")
