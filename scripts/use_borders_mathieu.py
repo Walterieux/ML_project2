@@ -28,7 +28,7 @@ img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 border_size = 4
 img_patch_with_border_size = img_patch_size + (2*border_size)
 img_shape = (400, 400)
-NUM_EPOCHS = 60
+NUM_EPOCHS = 30
 
 
 def extract_images(image_path):
@@ -79,11 +79,25 @@ def create_patches(data, patch_shape):
     return np.asarray(imgs)
 
 
-def add_border(image, border):
+def add_border_3d(image, border):
     """
     Adds a black border of size border to a given image
     """
     out = np.zeros((image.shape[0] + (border*2), image.shape[1] + (border*2), 3), dtype=image.dtype)
+    for x in range(image.shape[0] + (border*2)):
+        for y in range(image.shape[1] + (border*2)):
+            if x < border or x >= border + image.shape[0] or y < border or y >= border + image.shape[1]:
+                out[x][y] = [0.0, 0.0, 0.0]
+            else:
+                out[x][y] = image[x - border][y - border]
+    return out
+
+
+def add_border_2d(image, border):
+    """
+    Adds a black border of size border to a given image
+    """
+    out = np.zeros((image.shape[0] + (border*2), image.shape[1] + (border*2)), dtype=image.dtype)
     for x in range(image.shape[0] + (border*2)):
         for y in range(image.shape[1] + (border*2)):
             if x < border or x >= border + image.shape[0] or y < border or y >= border + image.shape[1]:
@@ -93,26 +107,31 @@ def add_border(image, border):
     return out
 
 
-def create_patches_with_border(data, patch_shape, border):
+def create_patches_with_border(data, patch_shape, border, batch_name=""):
     """separate image into patches, data is a collection of images"""
 
     imgs = []
     for i in range(data.shape[0]):
-        # Add border to whole image
-        img = add_border(data[i], border)
-        # Split image
         if len(patch_shape) == 3:  # RGB images
+            # Add border to whole image
+            img = add_border_3d(data[i], border)
+            # Split image
             patches = patchify(img, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
                                step=patch_shape[0])
-            patches = patches.reshape((-1, patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]))
+            patches = patches.reshape((-1, patch_shape[0] + (border * 2), patch_shape[1] + (border * 2),
+                                       patch_shape[2]))
             imgs.extend(patches)
         else:
-            patches = patchify(img, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2), patch_shape[2]),
+            # Add border to whole image
+            img = add_border_2d(data[i], border)
+            # Split image
+            patches = patchify(img, (patch_shape[0] + (border * 2), patch_shape[1] + (border * 2)),
                                step=patch_shape[0])
             patches = patches.reshape((-1, patch_shape[0] + (border * 2), patch_shape[1] + (border * 2)))
             number_of_patches = patches.shape[0]
             patches = patches.reshape((number_of_patches, -1))
             imgs.extend(patches)
+        print(batch_name, ": PROCESSED", i, "/", data.shape[0], "IMAGES")
 
     return np.asarray(imgs)
 
@@ -167,10 +186,14 @@ def train_model(train_images, test_images, train_labels, test_labels):
     patches_test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
     """
 
-    patches_train_images = create_patches_with_border(train_images, (img_patch_size, img_patch_size, 3), border_size)
-    patches_test_images = create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size)
-    patches_train_labels = create_patches_with_border(train_labels, (img_patch_size, img_patch_size), border_size)
-    patches_test_labels = create_patches_with_border(test_labels, (img_patch_size, img_patch_size), border_size)
+    patches_train_images = create_patches_with_border(train_images, (img_patch_size, img_patch_size, 3), border_size,
+                                                      "TRAIN IMAGES")
+    patches_test_images = create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size,
+                                                     "TEST IMAGES")
+    patches_train_labels = create_patches_with_border(train_labels, (img_patch_size, img_patch_size), border_size,
+                                                      "TRAIN LABELS")
+    patches_test_labels = create_patches_with_border(test_labels, (img_patch_size, img_patch_size), border_size,
+                                                     "TEST LABELS")
 
     print("train label shape: ", patches_train_labels.shape)
     patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
@@ -246,41 +269,6 @@ def train_model(train_images, test_images, train_labels, test_labels):
     return model, test_loss, test_acc
 
 
-def cross_validation_training(images, labels, num_folds):
-    """
-    Train model with cross validation
-
-    Returns the model with the best accuracy over the testing set
-    """
-
-    acc_per_fold = []
-    loss_per_fold = []
-    best_accuracy = 0
-    best_model = None
-
-    kfold = KFold(n_splits=num_folds, shuffle=True)
-    for train_index, test_index in kfold.split(images, labels):
-
-        # Split data
-        train_images = images[train_index]
-        test_images = images[test_index]
-        train_labels = labels[train_index]
-        test_labels = labels[test_index]
-
-        model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
-
-        if test_acc > best_accuracy:
-            best_accuracy = test_acc
-            best_model = model
-
-        acc_per_fold.append(test_acc)
-        loss_per_fold.append(test_loss)
-    print("Mean accuracy = ", np.mean(acc_per_fold), " accuracy variance: ", np.var(acc_per_fold))
-    print("Mean loss = ", np.mean(loss_per_fold), " loss variance: ", np.var(loss_per_fold))
-
-    return best_model
-
-
 def train_test_split_training(images, labels, test_size):
     """
     Train the model with a simple split of the data:
@@ -313,10 +301,28 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
+    print("LOADING IMAGES...")
+
     train_images = extract_images(training_training_data_path)
     test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
+
+    """
+    print("SHRINKING IMAGES...")
+
+    # shrink data size
+    indexes = np.arange(len(train_images))
+    np.random.shuffle(indexes)
+    train_images = train_images[indexes[0: int(0.3 * len(indexes))]]
+    train_labels = train_labels[indexes[0: int(0.3 * len(indexes))]]
+    indexes = np.arange(len(test_images))
+    np.random.shuffle(indexes)
+    test_images = test_images[indexes[0: int(0.3 * len(indexes))]]
+    test_labels = test_labels[indexes[0: int(0.3 * len(indexes))]]
+    """
+
+    print("START TRAINING")
 
     model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
     model.save("saved_model")
