@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split, KFold
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
 
-import scripts.create_submission_groundtruth
+import create_submission_groundtruth
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -234,10 +234,10 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.show()
 
     training_test_predicted_labels = model.predict(patches_test_images)
-    unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
+    unpatched_labels = create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
                                                                             test_images.shape[0],
                                                                             img_shape)
-    scripts.create_submission_groundtruth.save_labels(unpatched_labels,
+    create_submission_groundtruth.save_labels(unpatched_labels,
                                                       "../data/training_test/data_augmented_predicted_labels/")
 
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
