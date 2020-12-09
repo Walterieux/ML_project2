@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split, KFold
 
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
-
+from image_preproces import center, write_mean_std_csv 
 import scripts.create_submission_groundtruth
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -268,17 +268,18 @@ def main():
     train_labels_filename = data_dir + 'training/groundtruth/'
     train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
     train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
-
+    
     training_training_data_path = data_dir + 'training_training/data_augmented'
     training_training_labels_path = data_dir + 'training_training/data_augmented_groundtruth'
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    train_images = extract_images(training_training_data_path)
-    test_images = extract_images(training_test_data_path)
+    train_images, mean_train, std_train = center(extract_images(training_training_data_path))
+    test_images = center(extract_images(training_test_data_path), sigma=std_train, mean=mean_train, still_to_center=False)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
-
+    
+    write_mean_std_csv("mean_std_training.csv", mean_train,std_train)
 
     # model = train_test_split_training(images, labels, 0.9)
     model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)

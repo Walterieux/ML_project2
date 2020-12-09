@@ -136,19 +136,19 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
     for number, image in enumerate(image_list):
         reshaped = extract_blocks(image, patch_size, keep_as_view=True)
         summed = np.mean(reshaped, axis=(2,3))
-        threshold_matrix = np.where(summed >= 0.25,1,0)
+        threshold_matrix = np.where(summed >= 0.2,1,0)
         allconv = np.zeros((4,summed.shape[0],summed.shape[1]))
         #thresholds are lower for up & down and left & right as it is more likely to happen
-        thresholds=[0.9,0.9,0.9,0.9]
+        thresholds=[1.2, 1.2, 1.2, 1.2]
         for i in range(4):
             allconv[i,:,:] = signal.convolve2d(summed, convolutions_4[i,:,:], boundary='symm', mode='same')
             allconv[i,:,:] = np.where(allconv[i,:,:] >= thresholds[i], 1, 0)
             allconv[i,:,:] = np.multiply( allconv[i,:,:] , threshold_matrix)
 
-        road_in_patch = threshold_matrix
-        #road_in_patch = np.where(np.sum(allconv, axis=0) >=1 , 1, 0)
+        #road_in_patch = threshold_matrix
+        road_in_patch = np.where(np.sum(allconv, axis=0) >=1 , 1, 0)
         patch_convolution = signal.convolve2d(road_in_patch, np.array([[1,1,1],[1,0,1],[1,1,1]]), boundary='symm', mode='same')
-        road_in_patch = np.where(patch_convolution>=8, 1, road_in_patch)
+        road_in_patch = np.where(patch_convolution>=6, 1, road_in_patch)
         road_in_patch = np.where(patch_convolution==0, 0, road_in_patch)
 
 
@@ -185,7 +185,10 @@ def save_comparaison(original_image, image, correct_patch, filename_comparaison,
     plt.figure()
     plt.ioff()
     plt.subplot(221)
-    plt.imshow(original_image)
+    if (np.array_equal(original_image, image.astype(bool))):
+        plt.imshow(original_image,cmap='gray')
+    else: 
+        plt.imshow(original_image)
     plt.title("original", fontsize=10)
     plt.subplot(222)
     plt.imshow(image, cmap='gray')
@@ -216,4 +219,4 @@ filename_comparaison = data_dir + 'comparaisons/'
 
 original_images = extract_images_test(original_img, 50)
 images = extract_images(test_dir)
-submission_convolution(correct_labels, images, filename_comparaison,original_images)
+submission_convolution(correct_labels, images, filename_comparaison,original_images, comparaison=True)
