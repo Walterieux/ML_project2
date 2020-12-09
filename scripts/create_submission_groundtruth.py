@@ -2,7 +2,7 @@ import imageio
 from tensorflow import keras
 import numpy as np
 
-import scripts.cnn_training
+import cnn_training
 
 img_patch_size = 16
 img_shape = (608, 608)
@@ -57,7 +57,7 @@ def main():
     """
 
     test_images = extract_test_images()
-    patches_images = scripts.cnn_training.create_patches(test_images, (img_patch_size, img_patch_size, 3))
+    patches_images = cnn_training.create_patches(test_images, (img_patch_size, img_patch_size, 3))
 
     model = keras.models.load_model("saved_model")
 
