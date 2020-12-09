@@ -22,7 +22,7 @@ def center(list_of_image, sigma=None, mean=None, still_to_center=True):
         sigma = np.std(list_of_image, axis=(0, 1, 2))
         mean = np.mean(list_of_image, axis=(0, 1, 2))
 
-    return (list_of_image - mean) / sigma
+    return (list_of_image - mean) / sigma, mean, sigma
 
 
 def read_images(filename, num_images):

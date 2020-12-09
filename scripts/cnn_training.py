@@ -17,7 +17,10 @@ from sklearn.model_selection import train_test_split, KFold
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
 
-import create_submission_groundtruth
+import scripts.create_submission_groundtruth
+
+from scripts.images_preproces import center
+from scripts.use_borders_mathieu import create_patches_with_border
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -25,8 +28,10 @@ session = tf.compat.v1.Session(config=config)
 tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
+border_size = 4
+img_patch_with_border_size = img_patch_size + (2 * border_size)
 img_shape = (400, 400)
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 
 def extract_images(image_path):
@@ -119,6 +124,16 @@ def train_model(train_images, test_images, train_labels, test_labels):
     Returns the model, accuracy over the test data, loss over the test data
     """
 
+    # shrink data size
+    indexes = np.arange(len(train_images))
+    np.random.shuffle(indexes)
+    train_images = train_images[indexes[0: int(0.3 * len(indexes))]]
+    train_labels = train_labels[indexes[0: int(0.3 * len(indexes))]]
+    indexes = np.arange(len(test_images))
+    np.random.shuffle(indexes)
+    test_images = test_images[indexes[0: int(0.3 * len(indexes))]]
+    test_labels = test_labels[indexes[0: int(0.3 * len(indexes))]]
+
     nb_train = np.prod(train_labels.shape)
     nb_test = np.prod(test_labels.shape)
     percentage_road = (np.mean(train_labels) * nb_train + np.mean(test_labels) * nb_test) / (
@@ -126,10 +141,23 @@ def train_model(train_images, test_images, train_labels, test_labels):
     print("percentage road: ", percentage_road)
 
     # create mini_patches
-    patches_train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
-    patches_test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
+    # patches_train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
+    # patches_test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
     patches_train_labels = create_patches(train_labels, (img_patch_size, img_patch_size))
     patches_test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
+
+    patches_train_images = create_patches_with_border(train_images, (img_patch_size, img_patch_size, 3), border_size,
+                                                      "TRAIN IMAGES")
+    patches_test_images = create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size,
+                                                     "TEST IMAGES")
+    """
+    patches_train_labels = create_patches_with_border(train_labels, (img_patch_size, img_patch_size), border_size,
+                                                      "TRAIN LABELS")
+    patches_test_labels = create_patches_with_border(test_labels, (img_patch_size, img_patch_size), border_size,
+                                                     "TEST LABELS")
+    """
+
+
 
     print("train label shape: ", patches_train_labels.shape)
     patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
@@ -146,7 +174,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     """ ~ Model from Stanford University: https://youtu.be/bNb2fEVKeEo?t=3683"""
     model.add(
         layers.Conv2D(64, kernel_size=(3, 3), padding='same',
-                      input_shape=(img_patch_size, img_patch_size, 3)))  # TODO change this
+                      input_shape=(img_patch_with_border_size, img_patch_with_border_size, 3)))  # TODO change this
     """
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7873262
     Batch Normalization Layer:The batch normalization (BN)was  introduced by  Ioffe  and  Szegedy  [43]  to  avoid  
@@ -220,7 +248,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=128,
+                        batch_size=64,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
 
@@ -234,10 +262,10 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.show()
 
     training_test_predicted_labels = model.predict(patches_test_images)
-    unpatched_labels = create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
+    unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
                                                                             test_images.shape[0],
                                                                             img_shape)
-    create_submission_groundtruth.save_labels(unpatched_labels,
+    scripts.create_submission_groundtruth.save_labels(unpatched_labels,
                                                       "../data/training_test/data_augmented_predicted_labels/")
 
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
@@ -316,11 +344,12 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
+    #train_images, mean, std = center(extract_images(training_training_data_path))
+    #test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
     train_images = extract_images(training_training_data_path)
     test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
-
 
     # model = train_test_split_training(images, labels, 0.9)
     model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
