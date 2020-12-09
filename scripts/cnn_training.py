@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split, KFold
 
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
-from image_preproces import center, write_mean_std_csv 
+from image_preproces import center, write_mean_std_csv
 import scripts.create_submission_groundtruth
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -26,7 +26,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
-NUM_EPOCHS = 100
+NUM_EPOCHS = 150
 
 
 def extract_images(image_path):
@@ -119,6 +119,12 @@ def train_model(train_images, test_images, train_labels, test_labels):
     Returns the model, accuracy over the test data, loss over the test data
     """
 
+    nb_train = np.prod(train_labels.shape)
+    nb_test = np.prod(test_labels.shape)
+    percentage_road = (np.mean(train_labels) * nb_train + np.mean(test_labels) * nb_test) / (
+                nb_train + nb_test)
+    print("percentage road: ", percentage_road)
+
     # create mini_patches
     patches_train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
     patches_test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
@@ -141,44 +147,80 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(
         layers.Conv2D(64, kernel_size=(3, 3), padding='same',
                       input_shape=(img_patch_size, img_patch_size, 3)))  # TODO change this
+    """
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7873262
+    Batch Normalization Layer:The batch normalization (BN)was  introduced by  Ioffe  and  Szegedy  [43]  to  avoid
+    gradient vanishing  and  reduce  internal  covariate  shift  (the  change  in the input distribution to a learning
+    system).
+    """
+    model.add(keras.layers.BatchNormalization())
     model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(64, kernel_size=(3, 3)))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
-    model.add(Dropout(.50))  # Avoid overfitting
-
-    model.add(layers.Conv2D(128, kernel_size=(4, 4), strides=(2, 2), padding='same'))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
-    model.add(tf.keras.layers.ReLU())
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
-    model.add(Dropout(.50))
-
-    """model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
-    model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
     model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
     model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
     model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.25))"""
+    # http://mipal.snu.ac.kr/images/1/16/Dropout_ACCV2016.pdf
+    model.add(Dropout(.10))  # Avoid overfitting
+    # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+    # model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
+    model.add(layers.MaxPool2D((2, 2),  padding='same'))
+    model.add(Dropout(.10))
+    # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+
+    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.ReLU())
+    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+    model.add(layers.MaxPool2D((2, 2), padding='same'))
+    model.add(Dropout(.10))
+    # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
 
     model.add(layers.Flatten())
-    model.add(Dropout(.5))
-    model.add(layers.Dense(1024))
+    # model.add(Dropout(.5))
+    model.add(layers.Dense(512))
     model.add(tf.keras.layers.ReLU())
     model.add(Dropout(.5))
-    # model.add(Dropout(.5))
+    model.add(layers.Dense(512))
+    model.add(tf.keras.layers.ReLU())
+    model.add(Dropout(.5))
+
     # model.add(layers.Dense(1024))
     # model.add(tf.keras.layers.ReLU())
     # model.add(Dropout(.5))
     model.add(layers.Dense(1, activation='sigmoid'))
 
+    model.summary()
+
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
-                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
+                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=512,
+                        batch_size=128,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
 
@@ -192,10 +234,10 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.show()
 
     training_test_predicted_labels = model.predict(patches_test_images)
-    unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
+    unpatched_labels = create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
                                                                             test_images.shape[0],
                                                                             img_shape)
-    scripts.create_submission_groundtruth.save_labels(unpatched_labels,
+    create_submission_groundtruth.save_labels(unpatched_labels,
                                                       "../data/training_test/data_augmented_predicted_labels/")
 
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
@@ -268,7 +310,7 @@ def main():
     train_labels_filename = data_dir + 'training/groundtruth/'
     train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
     train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
-    
+
     training_training_data_path = data_dir + 'training_training/data_augmented'
     training_training_labels_path = data_dir + 'training_training/data_augmented_groundtruth'
     training_test_data_path = data_dir + 'training_test/data_augmented'
@@ -278,7 +320,7 @@ def main():
     test_images = center(extract_images(training_test_data_path), sigma=std_train, mean=mean_train, still_to_center=False)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
-    
+
     write_mean_std_csv("mean_std_training.csv", mean_train,std_train)
 
     # model = train_test_split_training(images, labels, 0.9)
