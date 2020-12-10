@@ -28,10 +28,10 @@ session = tf.compat.v1.Session(config=config)
 tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
-border_size = 4
+border_size = 8
 img_patch_with_border_size = img_patch_size + (2 * border_size)
 img_shape = (400, 400)
-NUM_EPOCHS = 50
+NUM_EPOCHS = 100
 
 
 def extract_images(image_path):
@@ -127,12 +127,12 @@ def train_model(train_images, test_images, train_labels, test_labels):
     # shrink data size
     indexes = np.arange(len(train_images))
     np.random.shuffle(indexes)
-    train_images = train_images[indexes[0: int(0.3 * len(indexes))]]
-    train_labels = train_labels[indexes[0: int(0.3 * len(indexes))]]
+    train_images = train_images[indexes[0: int(0.4 * len(indexes))]]
+    train_labels = train_labels[indexes[0: int(0.4 * len(indexes))]]
     indexes = np.arange(len(test_images))
     np.random.shuffle(indexes)
-    test_images = test_images[indexes[0: int(0.3 * len(indexes))]]
-    test_labels = test_labels[indexes[0: int(0.3 * len(indexes))]]
+    test_images = test_images[indexes[0: int(0.4 * len(indexes))]]
+    test_labels = test_labels[indexes[0: int(0.4 * len(indexes))]]
 
     nb_train = np.prod(train_labels.shape)
     nb_test = np.prod(test_labels.shape)
