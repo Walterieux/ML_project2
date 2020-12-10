@@ -28,10 +28,10 @@ session = tf.compat.v1.Session(config=config)
 tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
-border_size = 8
+border_size = 16
 img_patch_with_border_size = img_patch_size + (2 * border_size)
 img_shape = (400, 400)
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 
 def extract_images(image_path):
@@ -43,7 +43,8 @@ def extract_images(image_path):
     imgs = []
     for img_path in glob.glob(image_path + "/*.png"):
         img = imageio.imread(img_path)
-        img = img / 255.0
+        # img = img / 255.0
+        img = normalize_image(img)
         imgs.append(img.astype('float32'))
 
     return np.asarray(imgs)
@@ -117,6 +118,16 @@ def represent_predicted_labels(given, first_pred, second_pred):
     img.show()
 
 
+def normalize_image(image):
+    """
+    Return an array with values between 0 and 1
+    """
+
+    min = np.min(image)
+    max = np.max(image)
+    return (image - min)/(max-min)
+
+
 def train_model(train_images, test_images, train_labels, test_labels):
     """
     Train a predefined model with the given data
@@ -127,8 +138,8 @@ def train_model(train_images, test_images, train_labels, test_labels):
     # shrink data size
     indexes = np.arange(len(train_images))
     np.random.shuffle(indexes)
-    train_images = train_images[indexes[0: int(0.4 * len(indexes))]]
-    train_labels = train_labels[indexes[0: int(0.4 * len(indexes))]]
+    train_images = train_images[indexes[0: int(0.25 * len(indexes))]]
+    train_labels = train_labels[indexes[0: int(0.25 * len(indexes))]]
     indexes = np.arange(len(test_images))
     np.random.shuffle(indexes)
     test_images = test_images[indexes[0: int(0.4 * len(indexes))]]
@@ -188,7 +199,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(keras.layers.BatchNormalization())
     model.add(tf.keras.layers.ReLU())
     model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))
+    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))  # TODO change this
     # http://mipal.snu.ac.kr/images/1/16/Dropout_ACCV2016.pdf
     model.add(Dropout(.10))  # Avoid overfitting
     # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))

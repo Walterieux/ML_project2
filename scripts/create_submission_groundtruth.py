@@ -7,7 +7,7 @@ import scripts.cnn_training
 import scripts.use_borders_mathieu
 
 img_patch_size = 16
-border_size = 8
+border_size = 16
 img_shape = (608, 608)
 
 
@@ -20,7 +20,8 @@ def extract_test_images():
     for i in range(1, 51):
         img_path = '../data/test_set_images/test_' + str(i) + '/test_' + str(i) + '.png'
         img = imageio.imread(img_path)
-        img = img / 255.0
+        # img = img / 255.0
+        img = scripts.cnn_training.normalize_image(img)
         imgs.append(img.astype('float32'))
 
     return np.asarray(imgs)
