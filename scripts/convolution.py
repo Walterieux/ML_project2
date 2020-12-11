@@ -10,7 +10,10 @@ import imageio
 from scipy import signal
 import glob
 from matplotlib import pyplot as plt
+from skimage import io, img_as_bool
+from skimage.transform import resize
 
+output_size = 388 
 input_size = 572
 def separate_data():
     data_dir = '../data/'
@@ -219,17 +222,29 @@ def get_number_of_not_normalised(data) :
 
 
 
-def apply_patches_for_array_of_images(image_list): 
+def apply_patches_for_array_of_images(image_list, rgb_binary =True): 
     """
     image_list : array like
      ------------------------
-     output : return a list of batches [input_size, input_size, 4*image_list.shape[0]]
+     output : return a list of batches [input_size, input_size, 4*image_list.shape[0]] if rgb_binary =True
+     output : return a list of batches [output_size, output_size, 4*image_list.shape[0]] if rgb_binary =False
     
     """
     nb_patch_per_image = 4
-    list_of_batches = np.zeros((input_size, input_size, 4*image_list.shape[0]))
+    if rgb_binary == False: 
+        list_of_batches = np.zeros((output_size, output_size, 4*image_list.shape[0]))
+    else : 
+        list_of_batches = np.zeros((input_size,  input_size, 4*image_list.shape[0]))
     for number,image in enumerate(image_list):
-        list_of_batches[:,:,number* nb_patch_per_image : (number+1) * nb_patch_per_image] = create_patches_from_training_or_test(image)
+        if rgb_binary == False: 
+            list_of_batches[:,:, number* nb_patch_per_image : (number+1) * nb_patch_per_image] = create_patches_from_training_or_test(image , rgb_binary = False,)
+        else: 
+                
+            list_of_batches[:,:, number* nb_patch_per_image : (number+1) * nb_patch_per_image ] = create_patches_from_training_or_test(image)
+
+    return list_of_batches 
+
+
 
 def create_patches_from_training_or_test(image, rgb_binary = True): 
     """ image : array like 
@@ -237,13 +252,18 @@ def create_patches_from_training_or_test(image, rgb_binary = True):
     --------------------------------output -------------------------------
     4 batches of size input_size *input_size as needed as input for the Unet
     330*330 *3 from images + 3 *161 black +1 black
+    and when output rgb_binary = False
+    388*388
     
     """
     
     #definition of constants used in the program
     nb_batches = 4
     nb_elem_image = 330
-    batches = np.zeros((input_size,input_size,4))
+    if rgb_binary == True:
+        batches = np.zeros((input_size, input_size, nb_batches))
+    else : 
+        batches = np.zeros((output_size, output_size, nb_batches))
     zeros_elem_not_from_image = 3*161 + 1
     
     for i in range(nb_batches): 
@@ -272,16 +292,58 @@ def create_patches_from_training_or_test(image, rgb_binary = True):
                 elements_from_array = np.ravel(image[-nb_elem_image:,-nb_elem_image:])
             
             
-        all_elements_of_batch = np.concatenate((elements_from_array,np.zeros(zeros_elem_not_from_image).astype(int)))
-        
-        print("size of elements :", np.size(all_elements_of_batch) ," and 572 * 572 ", 572*572)
-        batches[:,:,i] = np.reshape(all_elements_of_batch,(input_size,input_size))
+        if rgb_binary == True:
+                all_elements_of_batch = np.concatenate((elements_from_array,np.zeros(zeros_elem_not_from_image).astype(int)))
+                batches[:,:,i] = np.reshape(all_elements_of_batch,(input_size,input_size))
+
+        else : 
+                batches[:,:, i] = img_as_bool(resize(elements_from_array.astype(int), (output_size, output_size)))
+
     
     return batches
         
+    
+
+def get_output_from_cnn_batch(batches_4,input_output): 
+    
+    """
+    input batches_4 : array like [output_size, outputsize, 4]
+    
+    input_output : represents the number of array of the initial output image
+    
+    --------------output ---------------------------------------------
+    return groundtruth image
+    """
+    print("output begins" )
+    nb_batches = 4
+    nb_elem_image = 330
+    input_output = 400
+    output_image = np.zeros( (input_output, input_output ))
+    
         
+            output_image[0:nb_elem_image,0:nb_elem_image] = resize(batches_4[:,:,0], (nb_elem_image, nb_elem_image))
+            
+            output_image[0:nb_elem_image,-nb_elem_image:] = resize(batches_4[:,:,1], (nb_elem_image, nb_elem_image))
         
+            output_image[-nb_elem_image:,0:nb_elem_image] = resize(batches_4[:,:,2], (nb_elem_image, nb_elem_image))
         
+            output_image[-nb_elem_image:,-nb_elem_image:] = resize(batches_4[:,:,3], (nb_elem_image, nb_elem_image))
+    
+    #begin to be more though but here we try to recalculate the initial image, we haveto divide by 2, 3 or 4 to some place
+    #take a pencil to understand 
+    #small notes only for pr
+    #2
+    print("for loop ends")
+    output_image[0:-nb_elem_image:, -nb_elem_image: nb_elem_image] = output_image[0:-nb_elem_image, -nb_elem_image: nb_elem_image]/2
+    #4
+    output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image] = output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image]/2 
+    #5
+    output_image[-nb_elem_image:nb_elem_image, -nb_elem_image:nb_elem_image] = output_image[-nb_elem_image:nb_elem_image, -nb_elem_image:nb_elem_image]/4
+    #6
+    output_image[-nb_elem_image:nb_elem_image, nb_elem_image:] = output_image[-nb_elem_image:nb_elem_image, nb_elem_image:]/2
+    #8
+    output_image[nb_elem_image:,-nb_elem_image:nb_elem_image] = output_image[nb_elem_image:,-nb_elem_image:nb_elem_image]/2
+    print(output_image.shape)
 
 data_dir = '../data/'
 test_dir = data_dir + 'test_set_labels/'
@@ -290,11 +352,23 @@ correct_labels = data_dir + 'correct_labels/'
 original_img = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
 train_augmented = data_dir + 'training/data_augmented/'
+groundtruth = data_dir + 'training/groundtruth/'
+#list_augmented = extract_images(train_augmented, divide_by255=True)
 
-list_augmented = extract_images(train_augmented, divide_by255=True)
-#original_images = extract_images_test(original_img, 50)
 
-apply_patches_for_array_of_images(list_augmented)
+
+original_images = extract_images_test(original_img, 50)
+list_groundtruth = extract_images(groundtruth, divide_by255=False)
+
+list_batches = apply_patches_for_array_of_images(list_groundtruth,rgb_binary = False )
+
+
+print("list_batches shape :", np.shape(list_batches))
+get_output_from_cnn_batch(list_batches[:,:,0:4], 400 )
+
+
+
+#apply_patches_for_array_of_images(list_groundtruth, rgb_binary=False)
 #get_number_of_not_normalised(list_augmented)
 
 #image_filename = '../data/test_set_labels/satImage_' + '%.3d' % i + '.png'
