@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+import tensorflow_addons as tfa
 import ipykernel
 import matplotlib.pyplot as plt
 import time
@@ -31,7 +32,7 @@ img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 border_size = 16
 img_patch_with_border_size = img_patch_size + (2 * border_size)
 img_shape = (400, 400)
-NUM_EPOCHS = 50
+NUM_EPOCHS = 100
 
 
 def extract_images(image_path):
@@ -125,7 +126,7 @@ def normalize_image(image):
 
     min = np.min(image)
     max = np.max(image)
-    return (image - min)/(max-min)
+    return (image - min) / (max - min)
 
 
 def train_model(train_images, test_images, train_labels, test_labels):
@@ -148,7 +149,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     nb_train = np.prod(train_labels.shape)
     nb_test = np.prod(test_labels.shape)
     percentage_road = (np.mean(train_labels) * nb_train + np.mean(test_labels) * nb_test) / (
-                nb_train + nb_test)
+            nb_train + nb_test)
     print("percentage road: ", percentage_road)
 
     # create mini_patches
@@ -167,8 +168,6 @@ def train_model(train_images, test_images, train_labels, test_labels):
     patches_test_labels = create_patches_with_border(test_labels, (img_patch_size, img_patch_size), border_size,
                                                      "TEST LABELS")
     """
-
-
 
     print("train label shape: ", patches_train_labels.shape)
     patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
@@ -199,7 +198,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(keras.layers.BatchNormalization())
     model.add(tf.keras.layers.ReLU())
     model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.MaxPool2D((3, 3), strides=(2, 2), padding='same'))  # TODO change this
+    model.add(layers.MaxPool2D((2, 2), padding='same'))
     # http://mipal.snu.ac.kr/images/1/16/Dropout_ACCV2016.pdf
     model.add(Dropout(.10))  # Avoid overfitting
     # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
@@ -217,7 +216,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     model.add(tf.keras.layers.ReLU())
     model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
     # model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
-    model.add(layers.MaxPool2D((2, 2),  padding='same'))
+    model.add(layers.MaxPool2D((2, 2), padding='same'))
     model.add(Dropout(.10))
     # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
 
@@ -255,14 +254,16 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
-                  metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
+                  # metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
+                  metrics=[tfa.metrics.F1Score(num_classes=1, threshold=0.5)])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=64,
+                        batch_size=128,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
-
+    #TODO check history labels 
+    """
     plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
     plt.plot(history.history['val_binary_accuracy'], 'r', label="accuracy on validation set")
     plt.grid(True)
@@ -271,6 +272,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.ylabel('Accuracy')
     plt.legend()
     plt.show()
+    """
 
     training_test_predicted_labels = model.predict(patches_test_images)
     unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
@@ -355,8 +357,8 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    #train_images, mean, std = center(extract_images(training_training_data_path))
-    #test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
+    # train_images, mean, std = center(extract_images(training_training_data_path))
+    # test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
     train_images = extract_images(training_training_data_path)
     test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)

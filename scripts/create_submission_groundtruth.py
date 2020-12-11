@@ -3,6 +3,8 @@ from tensorflow import keras
 import numpy as np
 
 import scripts.cnn_training
+import tensorflow_addons
+import tensorflow_addons as tfa
 
 import scripts.use_borders_mathieu
 
