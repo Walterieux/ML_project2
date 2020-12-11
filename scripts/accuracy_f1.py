@@ -53,5 +53,5 @@ list_images_CNN = extract_images(test_CNN)
 test_CNN_binary = data_dir + 'training_test/labels_binary/'
 comparaisons = data_dir + 'training_test/comparaisons/'
 list_images_CNN_binary = extract_images (test_CNN_binary)
-submission_convolution(test_CNN_binary, list_images_CNN, comparaisons, list_groundtruth, comparaison=True)
+submission_convolution(test_CNN_binary, list_images_CNN, comparaisons, list_groundtruth, comparaison=False)
 calculate_accuracy_and_f1_score(list_images_CNN_binary, list_groundtruth) 

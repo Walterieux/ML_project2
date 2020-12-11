@@ -152,6 +152,7 @@ data_dir = '../data/'
 train_data_filename = data_dir + 'training/images/'
 train_labels_filename = data_dir + 'training/groundtruth/'
 train_augmented = data_dir + 'training/data_augmented/'
+
 train_data_norm = data_dir + 'training/data_augmented_norm/'
 train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
 TRAINING_SIZE = 1600
