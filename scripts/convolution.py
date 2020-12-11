@@ -320,19 +320,14 @@ def get_output_from_cnn_batch(batches_4,input_output):
     input_output = 400
     output_image = np.zeros( (input_output, input_output ))
     
-    for i in range(nb_batches):
         
-        if i==0 :
-            output_image[0:nb_elem_image,0:nb_elem_image] = resize(batches_4[:,:,i], (nb_elem_image, nb_elem_image))
+            output_image[0:nb_elem_image,0:nb_elem_image] = resize(batches_4[:,:,0], (nb_elem_image, nb_elem_image))
             
-        elif i==1:
-            output_image[0:nb_elem_image,-nb_elem_image:] = resize(batches_4[:,:,i], (nb_elem_image, nb_elem_image))
+            output_image[0:nb_elem_image,-nb_elem_image:] = resize(batches_4[:,:,1], (nb_elem_image, nb_elem_image))
         
-        elif i ==2:
-            output_image[-nb_elem_image:,0:nb_elem_image] = resize(batches_4[:,:,i], (nb_elem_image, nb_elem_image))
+            output_image[-nb_elem_image:,0:nb_elem_image] = resize(batches_4[:,:,2], (nb_elem_image, nb_elem_image))
         
-        else: 
-            output_image[-nb_elem_image:,-nb_elem_image:] = resize(batches_4[:,:,i], (nb_elem_image, nb_elem_image))
+            output_image[-nb_elem_image:,-nb_elem_image:] = resize(batches_4[:,:,3], (nb_elem_image, nb_elem_image))
     
     #begin to be more though but here we try to recalculate the initial image, we haveto divide by 2, 3 or 4 to some place
     #take a pencil to understand 
