@@ -11,7 +11,7 @@ from scipy import signal
 import glob
 from matplotlib import pyplot as plt
 
-
+input_size = 572
 def separate_data():
     data_dir = '../data/'
     data_dir_training = data_dir + 'training/'
@@ -103,7 +103,7 @@ def extract_images_test(filename, num_images):
     return np.asarray(imgs)
 
 
-def extract_images(image_path):
+def extract_images(image_path, divide_by255=True):
     """
     Extract all images from 'image_path'
     All values are between 0 and 1
@@ -112,13 +112,14 @@ def extract_images(image_path):
     imgs = []
     for img_path in glob.glob(image_path + "/*.png"):
         img = imageio.imread(img_path)
-        img = img / 255.0
+        if divide_by255:
+            img = img / 255.0
         imgs.append(img.astype('float32'))
 
     return np.asarray(imgs)
 
 
-def submission_convolution(filename, image_list, filename_comparaison, original_images):
+def submission_convolution(filename, image_list, filename_comparaison, original_images, comparaison=False):
     """input : @filename : where to store the images
     #        @image_list : list of images after CNN
     #        @filename_comparaison : where to store the images compared
@@ -135,34 +136,32 @@ def submission_convolution(filename, image_list, filename_comparaison, original_
     patch_size = (16, 16)
     for number, image in enumerate(image_list):
         reshaped = extract_blocks(image, patch_size, keep_as_view=True)
-        summed = np.mean(reshaped, axis=(2, 3))
-        threshold_matrix = np.where(summed >= 0.15, 1, 0)
-        allconv = np.zeros((4, summed.shape[0], summed.shape[1]))
-        # thresholds are lower for up & down and left & right as it is more likely to happen
-        thresholds = [1.3, 1.2, 1.3, 1.2]
+        summed = np.mean(reshaped, axis=(2,3))
+        threshold_matrix = np.where(summed >= 0.2,1,0)
+        allconv = np.zeros((4,summed.shape[0],summed.shape[1]))
+        #thresholds are lower for up & down and left & right as it is more likely to happen
+        thresholds=[1.1, 1.1, 1.1, 1.1]
         for i in range(4):
-            allconv[i, :, :] = signal.convolve2d(summed, convolutions_4[i, :, :], boundary='symm', mode='same')
-            allconv[i, :, :] = np.where(allconv[i, :, :] >= thresholds[i], 1, 0)
-            allconv[i, :, :] = np.multiply(allconv[i, :, :], threshold_matrix)
+            allconv[i,:,:] = signal.convolve2d(summed, convolutions_4[i,:,:], boundary='symm', mode='same')
+            allconv[i,:,:] = np.where(allconv[i,:,:] >= thresholds[i], 1, 0)
+            allconv[i,:,:] = np.multiply( allconv[i,:,:] , threshold_matrix)
 
-        road_in_patch = np.where(np.sum(allconv, axis=0) >= 1, 1, 0)
-        patch_convolution = signal.convolve2d(road_in_patch, np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]]),
-                                              boundary='symm', mode='same')
-        road_in_patch = np.where(patch_convolution >= 6, 1, road_in_patch)
-        road_in_patch = np.where(patch_convolution == 0, 0, road_in_patch)
-
-        correct_patch = reshape_higher_dim(road_in_patch, patch_size, image.shape)
-
-        save_comparaison(original_images[number], image, correct_patch, filename_comparaison, number + 1)
-        save_img(filename, correct_patch, number + 1)
+        #road_in_patch = threshold_matrix
+        road_in_patch = np.where(np.sum(allconv, axis=0) >=1 , 1, 0)
+        patch_convolution = signal.convolve2d(road_in_patch, np.array([[1,1,1],[1,0,1],[1,1,1]]), boundary='symm', mode='same')
+        road_in_patch = np.where(patch_convolution>=6, 1, road_in_patch)
+        road_in_patch = np.where(patch_convolution==0, 0, road_in_patch)
 
 
-def store_list_img(filename, images_list):
-    for number, image in enumerate(images_list):
-        save_img(filename, image, number + 1)
+        correct_patch = reshape_higher_dim(road_in_patch , patch_size, image.shape)
+        if comparaison:
+            save_comparaison(original_images[number], image, correct_patch, filename_comparaison,number+1)
+        save_img(filename,correct_patch , number+1)
 
-
-def save_img(filename, image, number):
+def store_list_img(filename,images_list):
+    for number, image in enumerate(images_list) :
+        save_img(filename,image,number+1)
+def save_img(filename,image,number):
     """ @input : -filename : name of the directory where the images should be stored
                  -data_images: array of images that will be rotated from [45,90,135,..360] degrees
         @output: store the rotated images in the directory filename
@@ -187,7 +186,10 @@ def save_comparaison(original_image, image, correct_patch, filename_comparaison,
     plt.figure()
     plt.ioff()
     plt.subplot(221)
-    plt.imshow(original_image)
+    if (np.array_equal(original_image, image.astype(bool))):
+        plt.imshow(original_image,cmap='gray')
+    else: 
+        plt.imshow(original_image)
     plt.title("original", fontsize=10)
     plt.subplot(222)
     plt.imshow(image, cmap='gray')
@@ -203,6 +205,83 @@ def save_comparaison(original_image, image, correct_patch, filename_comparaison,
     fig.savefig(to_save, dpi=300)
     plt.close(fig)
 
+def get_number_of_not_normalised(data) : 
+    """
+    data : arrray like
+    ------------------------
+    output : return the number of not normalised images
+    """
+    counter = 0
+    for number, image in enumerate(data):
+        if np.max(image)!=1 or np.min(image) !=0:
+            counter += 1
+    print("the number of images not normalised : ", counter)
+
+
+
+def apply_patches_for_array_of_images(image_list): 
+    """
+    image_list : array like
+     ------------------------
+     output : return a list of batches [input_size, input_size, 4*image_list.shape[0]]
+    
+    """
+    nb_patch_per_image = 4
+    list_of_batches = np.zeros((input_size, input_size, 4*image_list.shape[0]))
+    for number,image in enumerate(image_list):
+        list_of_batches[:,:,number* nb_patch_per_image : (number+1) * nb_patch_per_image] = create_patches_from_training_or_test(image)
+
+def create_patches_from_training_or_test(image, rgb_binary = True): 
+    """ image : array like 
+        rgb_binary : boolean indicates if groundtruh or rgb
+    --------------------------------output -------------------------------
+    4 batches of size input_size *input_size as needed as input for the Unet
+    330*330 *3 from images + 3 *161 black +1 black
+    
+    """
+    
+    #definition of constants used in the program
+    nb_batches = 4
+    nb_elem_image = 330
+    batches = np.zeros((input_size,input_size,4))
+    zeros_elem_not_from_image = 3*161 + 1
+    
+    for i in range(nb_batches): 
+        if i ==0:
+            if rgb_binary :
+                elements_from_array = np.ravel(image[0:nb_elem_image,0:nb_elem_image,:])
+            else : 
+                elements_from_array = np.ravel(image[0:nb_elem_image,0:nb_elem_image])
+            
+        elif i==1:
+            if rgb_binary :
+                elements_from_array = np.ravel(image[0:nb_elem_image,-nb_elem_image:,:])
+            else : 
+                elements_from_array = np.ravel(image[0:nb_elem_image,-nb_elem_image:])
+            
+        elif i ==2:
+            if rgb_binary :
+                elements_from_array = np.ravel(image[-nb_elem_image:,0:nb_elem_image,:])
+            else : 
+                elements_from_array = np.ravel(image[-nb_elem_image:,0:nb_elem_image])
+            
+        else: 
+            if rgb_binary: 
+                elements_from_array = np.ravel(image[-nb_elem_image:,-nb_elem_image:,:])
+            else : 
+                elements_from_array = np.ravel(image[-nb_elem_image:,-nb_elem_image:])
+            
+            
+        all_elements_of_batch = np.concatenate((elements_from_array,np.zeros(zeros_elem_not_from_image).astype(int)))
+        
+        print("size of elements :", np.size(all_elements_of_batch) ," and 572 * 572 ", 572*572)
+        batches[:,:,i] = np.reshape(all_elements_of_batch,(input_size,input_size))
+    
+    return batches
+        
+        
+        
+        
 
 data_dir = '../data/'
 test_dir = data_dir + 'test_set_labels/'
@@ -210,9 +289,22 @@ images = extract_images(test_dir)
 correct_labels = data_dir + 'correct_labels/'
 original_img = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
+train_augmented = data_dir + 'training/data_augmented/'
 
-separate_data()
+list_augmented = extract_images(train_augmented, divide_by255=True)
+#original_images = extract_images_test(original_img, 50)
 
-"""original_images = extract_images_test(original_img, 50)
-images = extract_images(test_dir)
-submission_convolution(correct_labels, images, filename_comparaison,original_images)"""
+apply_patches_for_array_of_images(list_augmented)
+#get_number_of_not_normalised(list_augmented)
+
+#image_filename = '../data/test_set_labels/satImage_' + '%.3d' % i + '.png'
+
+
+
+#separate_data()
+
+
+#original_images = extract_images_test(original_img, 50)
+#get_number_of_not_normalised(original_images)
+#images = extract_images(test_dir)
+#submission_convolution(correct_labels, images, filename_comparaison,original_images, comparaison=True)

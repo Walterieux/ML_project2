@@ -44,4 +44,5 @@ if __name__ == '__main__':
     for i in range(1, 51):
         image_filename = '../data/correct_labels/satImage_' + '%.3d' % i + '.png'
         image_filenames.append(image_filename)
+    print(image_filename)
     masks_to_submission(submission_filename, *image_filenames)

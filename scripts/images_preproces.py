@@ -12,7 +12,18 @@ import os
 import imageio
 
 
-def center(list_of_image, sigma=None, mean=None, still_to_center=True):
+def center_by_image(list_of_image):
+    """
+    @input : list_of_image : array like
+    @output : return a numpy array where image is centered 
+    """
+    centered_image = np.zeros(list_of_image.shape)
+    for number, image in enumerate(list_of_image):
+        mean = np.mean(image , axis =(0, 1))
+        std = np.std(image, axis =(0,1))
+        centered_image[number] = (image -mean)/std
+    return centered_image
+def center(list_of_image, mean=None, sigma=None, still_to_center=True):
     """
     @input : @list_of_image : array like [n,m,l,3]
     @return centered data : data - mean / std
@@ -22,7 +33,7 @@ def center(list_of_image, sigma=None, mean=None, still_to_center=True):
         sigma = np.std(list_of_image, axis=(0, 1, 2))
         mean = np.mean(list_of_image, axis=(0, 1, 2))
 
-    return (list_of_image - mean) / sigma
+    return (list_of_image - mean) / sigma, mean, sigma 
 
 
 def read_images(filename, num_images):
@@ -131,11 +142,19 @@ def save_img(filename, image, number):
     else:
         imageio.imwrite(image_filename, image.astype(np.uint8))
 
+def write_mean_std_csv(filename, mean, std):
+    with open(filename, 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(mean)
+    writer.writerow(std)
 
 data_dir = '../data/'
 train_data_filename = data_dir + 'training/images/'
 train_labels_filename = data_dir + 'training/groundtruth/'
 train_augmented = data_dir + 'training/data_augmented/'
+
 train_data_norm = data_dir + 'training/data_augmented_norm/'
 train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
 TRAINING_SIZE = 1600
+ 
+
