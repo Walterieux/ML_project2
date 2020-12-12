@@ -127,17 +127,41 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 		\label{fig:extensions}
 	\end{minipage}
 \end{figure}
-% TODO: figure comparison -> originl, non border, border, OR, better, graph
+% TODO: comparison -> graph
 
+\textit{[ALEX NET]}
+%TODO: our variant of alex net and its results
 
-% TODO: maybe evaluate the effect of hyperparameter tuning (kernel size etc)
-
-% TODO: CNN design
+\textit{[U-NET]}
+%TODO: our u-net variant and its results
 
 
 
 \subsection{Post-Processing} 
 \label{ssec:post}
+
+After observing that many of the predictions made by our designed models contained a fair amount of noise, we decided to use some post-processing to get clearer results. The observed noise mostly consists of single patches wrongly classified as road, lying in between patches correctly classified as background. We also notice some patches surrounded by road-patches that are classified as background.
+
+To subvert this issue, we apply a convolution filter to the resulting prediction. The convolution looks at blocks of patches of size $3 \times 3$, and determines if the central patch should be marked as road or not, depending on the $8$ patches surrounding it. The effect of this filter is shown in figure \ref{fig:post}. On average, this post-processing method improved our prediction accuracy by $XXX\%$.
+%TODO: ^^^ fill
+
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.48\linewidth}
+		\includegraphics[width=\textwidth]{correlation.png}
+		\captionsetup{aboveskip=0.4cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\caption{Prediction without post-processing}
+		\label{fig:noPost}
+	\end{minipage}
+	\hspace{0.05cm}
+	\begin{minipage}[b]{0.48\linewidth}
+		\includegraphics[width=\textwidth]{grid_search.png}
+		\captionsetup{aboveskip=0.1cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\caption{Prediction with post-processing}
+		\label{fig:post}
+	\end{minipage}
+\end{figure}
+% TODO: figure comparison -> original, post processed
 
 \subsection{Model Validation} 
 \label{ssec:model_validation}
