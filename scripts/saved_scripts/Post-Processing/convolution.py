@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # TODO : CLEAN and run for test
 # TODO : output : original prediction and processed prediction
+# TODO : CAREFUL WITH PATHS
 import os
 import numpy as np
 import imageio

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # TODO : CLEAN and run for test
-
+# TODO : CAREFUL WITH PATHS
 
 import os
 import subprocess
