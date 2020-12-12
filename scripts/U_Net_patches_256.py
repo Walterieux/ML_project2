@@ -17,8 +17,9 @@ from keras import Model
 from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D, \
     BatchNormalization, ReLU
 
+import create_submission_groundtruth
 from images_preproces import center
-from patches import create_patches
+from patches import create_patches, get_output_from_patches
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -229,15 +230,11 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.show()
     plt.savefig('U_Net_patches_256.png')
 
-    """
     training_test_predicted_labels = model.predict(patches_test_images)
-    unpatched_labels = create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
-                                                                            test_images.shape[0],
-                                                                            img_shape)
+    unpatched_labels = get_output_from_patches(training_test_predicted_labels, img_shape)
     create_submission_groundtruth.save_labels(unpatched_labels,
-                                                      "../data/training_test/data_augmented_predicted_labels/")
+                                              "../data/training_test/data_augmented_predicted_labels/")
 
-    """
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
     return model, test_loss, test_acc
@@ -309,8 +306,8 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    #train_images, mean, std = center(extract_images(training_training_data_path))
-    #test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
+    # train_images, mean, std = center(extract_images(training_training_data_path))
+    # test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
     train_images = extract_images(training_training_data_path)
     test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
