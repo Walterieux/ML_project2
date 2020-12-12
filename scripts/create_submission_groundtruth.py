@@ -2,7 +2,7 @@ import imageio
 from tensorflow import keras
 import numpy as np
 
-import scripts.cnn_training
+import cnn_training
 import tensorflow_addons
 import tensorflow_addons as tfa
 
@@ -23,7 +23,7 @@ def extract_test_images():
         img_path = '../data/test_set_images/test_' + str(i) + '/test_' + str(i) + '.png'
         img = imageio.imread(img_path)
         # img = img / 255.0
-        img = scripts.cnn_training.normalize_image(img)
+        img = cnn_training.normalize_image(img)
         imgs.append(img.astype('float32'))
 
     return np.asarray(imgs)
