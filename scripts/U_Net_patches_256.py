@@ -16,7 +16,7 @@ from patchify import patchify, unpatchify
 from sklearn.model_selection import train_test_split, KFold
 
 from keras import Model
-from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout
+from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D
 from keras.models import load_model
 from keras.optimizers import Adam
 
@@ -28,9 +28,7 @@ config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
 tf.compat.v1.keras.backend.set_session(session)
 
-img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
-border_size = 16
-img_patch_with_border_size = img_patch_size + (2 * border_size)
+img_patch_size = 256
 img_shape = (400, 400)
 NUM_EPOCHS = 100
 
@@ -164,68 +162,75 @@ def train_model(train_images, test_images, train_labels, test_labels):
     # patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
     # patches_test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
 
-    # https://towardsdatascience.com/unet-line-by-line-explanation-9b191c76baf5
-    def build_model(input_size, start_neurons):
+    # https://github.com/ArkaJU/U-Net-Satellite/blob/master/U-Net.ipynb
+    def build_model(input_size=(256, 256, 3)):
         inputs = Input(input_size)
-        conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(inputs)
-        conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(conv1)
-        pool1 = MaxPooling2D((2, 2))(conv1)
-        pool1 = Dropout(0.25)(pool1)
 
-        conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(pool1)
-        conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(conv2)
-        pool2 = MaxPooling2D((2, 2))(conv2)
-        pool2 = Dropout(0.5)(pool2)
+        conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
+        conv1 = Conv2D(64, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv1)
 
-        conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(pool2)
-        conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(conv3)
-        pool3 = MaxPooling2D((2, 2))(conv3)
-        pool3 = Dropout(0.5)(pool3)
+        pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
 
-        conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(pool3)
-        conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(conv4)
-        pool4 = MaxPooling2D((2, 2))(conv4)
-        pool4 = Dropout(0.5)(pool4)
+        conv2 = Conv2D(128, 3, activation='relu', padding='same',kernel_initializer='he_normal')(pool1)
+        conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv2)
 
-        # Middle
-        convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(pool4)
-        convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(convm)
+        pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
 
-        deconv4 = Conv2DTranspose(start_neurons * 8, (3, 3), strides=(2, 2), padding="same")(convm)
-        uconv4 = concatenate([deconv4, conv4])
-        uconv4 = Dropout(0.5)(uconv4)
-        uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
-        uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
+        conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool2)
+        conv3 = Conv2D(256, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv3)
 
-        deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding="same")(uconv4)
-        uconv3 = concatenate([deconv3, conv3])
-        uconv3 = Dropout(0.5)(uconv3)
-        uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
-        uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
+        pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
 
-        deconv2 = Conv2DTranspose(start_neurons * 2, (3, 3), strides=(2, 2), padding="same")(uconv3)
-        uconv2 = concatenate([deconv2, conv2])
-        uconv2 = Dropout(0.5)(uconv2)
-        uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
-        uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
+        conv4 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(pool3)
+        conv4 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv4)
 
-        deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding="same")(uconv2)
-        uconv1 = concatenate([deconv1, conv1])
-        uconv1 = Dropout(0.5)(uconv1)
-        uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
-        uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
+        drop4 = Dropout(0.5)(conv4)
 
-        output_layer = Conv2D(1, (1, 1), padding="same", activation="sigmoid")(uconv1)
+        pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
 
-        model = Model(inputs=inputs, outputs=output_layer)
+        conv5 = Conv2D(1024, 3, activation='relu', padding='same',kernel_initializer='he_normal')(pool4)
+        conv5 = Conv2D(1024, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv5)
 
-        model.summary()
+        drop5 = Dropout(0.5)(conv5)
+
+        up6 = Conv2D(512, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(drop5))
+
+        merge6 = concatenate([drop4, up6])
+
+        conv6 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge6)
+        conv6 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv6)
+
+        up7 = Conv2D(256, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(conv6))
+
+        merge7 = concatenate([conv3, up7])
+
+        conv7 = Conv2D(256, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge7)
+        conv7 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv7)
+
+        up8 = Conv2D(128, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(conv7))
+
+        merge8 = concatenate([conv2, up8])
+
+        conv8 = Conv2D(128, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge8)
+        conv8 = Conv2D(128, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv8)
+
+        up9 = Conv2D(64, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(conv8))
+
+        merge9 = concatenate([conv1, up9])
+
+        conv9 = Conv2D(64, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge9)
+        conv9 = Conv2D(64, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv9)
+        conv9 = Conv2D(2, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv9)
+
+        conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
+
+        model = Model(inputs=inputs, outputs=conv10)
 
         model.compile(optimizer=Adam(lr=1e-3), loss='binary_crossentropy', metrics=['accuracy'])
 
         return model
 
-    model = build_model(input_size=(572, 572, 1), start_neurons=16)
+    model = build_model(input_size=(img_patch_size))
 
     history = model.fit(history=model.fit(patches_train_images,
                                           patches_train_labels,
@@ -315,11 +320,6 @@ def main():
     start = time.time()
 
     data_dir = '../data/'
-    train_data_filename = data_dir + 'training/images/'
-    train_labels_filename = data_dir + 'training/groundtruth/'
-    train_data_filename_norm = data_dir + 'training/data_augmented_norm/'
-    train_data_filename_edges = data_dir + 'training/data_augmented_edges/'
-
     training_training_data_path = data_dir + 'training_training/data_augmented'
     training_training_labels_path = data_dir + 'training_training/data_augmented_groundtruth'
     training_test_data_path = data_dir + 'training_test/data_augmented'
