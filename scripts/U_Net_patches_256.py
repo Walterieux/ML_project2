@@ -21,6 +21,7 @@ from keras.models import load_model
 from keras.optimizers import Adam
 
 import scripts.create_submission_groundtruth
+from patches import create_patches
 from scripts.convolution import create_patches_from_training_or_test, apply_patches_for_array_of_images
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -28,7 +29,7 @@ config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
 tf.compat.v1.keras.backend.set_session(session)
 
-img_patch_size = 256
+patch_shape = (256, 256, 3)
 img_shape = (400, 400)
 NUM_EPOCHS = 100
 
@@ -63,43 +64,6 @@ def extract_labels(label_path):
     return np.asarray(imgs)
 
 
-def create_patches(data, patch_shape):
-    """separate image into patches, data is a collection of images"""
-
-    imgs = []
-    for i in range(data.shape[0]):
-        if len(patch_shape) == 3:  # RGB images
-            patches = patchify(data[i], patch_shape, step=patch_shape[0])
-            patches = patches.reshape((-1, patch_shape[0], patch_shape[1], patch_shape[2]))
-            imgs.extend(patches)
-        else:
-            patches = patchify(data[i], patch_shape, step=patch_shape[0])
-            patches = patches.reshape((-1, patch_shape[0], patch_shape[1]))
-            number_of_patches = patches.shape[0]
-            patches = patches.reshape((number_of_patches, -1))
-            imgs.extend(patches)
-
-    return np.asarray(imgs)
-
-
-def characterise_each_patch_as_road_or_not(labels):
-    """
-    Binary classification for each patches, a patch is considered as a road if
-    he has more than 50% road on it
-
-    Parameters
-    ----------
-    labels : array_like
-        array of patches
-    """
-
-    new_labels = np.zeros((labels.shape[0]))
-    for i in range(labels.shape[0]):
-        new_labels[i] = 1 if np.count_nonzero(labels[i]) > labels[i].shape[0] / 2 else 0
-
-    return new_labels
-
-
 def represent_predicted_labels(given, first_pred, second_pred):
     """
     Draw the three images labels
@@ -117,16 +81,6 @@ def represent_predicted_labels(given, first_pred, second_pred):
     img.show()
 
 
-def normalize_image(image):
-    """
-    Return an array with values between 0 and 1
-    """
-
-    min = np.min(image)
-    max = np.max(image)
-    return (image - min) / (max - min)
-
-
 def train_model(train_images, test_images, train_labels, test_labels):
     """
     Train a predefined model with the given data
@@ -135,6 +89,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     """
 
     # shrink data size
+    """
     indexes = np.arange(len(train_images))
     np.random.shuffle(indexes)
     train_images = train_images[indexes[0: int(0.25 * len(indexes))]]
@@ -149,78 +104,83 @@ def train_model(train_images, test_images, train_labels, test_labels):
     percentage_road = (np.mean(train_labels) * nb_train + np.mean(test_labels) * nb_test) / (
             nb_train + nb_test)
     print("percentage road: ", percentage_road)
+    """
 
     # create mini_patches
-    patches_train_images = apply_patches_for_array_of_images(train_images)
-    patches_test_images = apply_patches_for_array_of_images(test_images)
-    patches_train_labels = apply_patches_for_array_of_images(train_labels, rgb_binary=False)
-    patches_test_labels = apply_patches_for_array_of_images(test_labels, rgb_binary=False)
+    patches_train_images = create_patches(train_images, patch_shape)
+    patches_test_images = create_patches(test_images, patch_shape)
+    patches_train_labels = create_patches(train_labels, (patch_shape[0], patch_shape[1]))
+    patches_train_labels = patches_train_labels[:, :, :, None]
+    patches_test_labels = create_patches(test_labels, (patch_shape[0], patch_shape[1]))
+    patches_test_labels = patches_test_labels[:, :, :, None]
 
     print("patches_train_images shape: ", patches_train_images.shape)
     print("patches_train_labels shape: ", patches_train_labels.shape)
 
-    # patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
-    # patches_test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
 
     # https://github.com/ArkaJU/U-Net-Satellite/blob/master/U-Net.ipynb
     def build_model(input_size=(256, 256, 3)):
         inputs = Input(input_size)
 
         conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
-        conv1 = Conv2D(64, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv1)
+        conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
 
         pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
 
-        conv2 = Conv2D(128, 3, activation='relu', padding='same',kernel_initializer='he_normal')(pool1)
+        conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool1)
         conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv2)
 
         pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
 
         conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool2)
-        conv3 = Conv2D(256, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv3)
+        conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv3)
 
         pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
 
-        conv4 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(pool3)
-        conv4 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv4)
+        conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool3)
+        conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv4)
 
         drop4 = Dropout(0.5)(conv4)
 
         pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
 
-        conv5 = Conv2D(1024, 3, activation='relu', padding='same',kernel_initializer='he_normal')(pool4)
-        conv5 = Conv2D(1024, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv5)
+        conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool4)
+        conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv5)
 
         drop5 = Dropout(0.5)(conv5)
 
-        up6 = Conv2D(512, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(drop5))
+        up6 = Conv2D(512, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+            UpSampling2D(size=(2, 2))(drop5))
 
         merge6 = concatenate([drop4, up6])
 
-        conv6 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge6)
-        conv6 = Conv2D(512, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv6)
+        conv6 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge6)
+        conv6 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv6)
 
-        up7 = Conv2D(256, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(conv6))
+        up7 = Conv2D(256, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+            UpSampling2D(size=(2, 2))(conv6))
 
         merge7 = concatenate([conv3, up7])
 
-        conv7 = Conv2D(256, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge7)
+        conv7 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge7)
         conv7 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv7)
 
-        up8 = Conv2D(128, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(conv7))
+        up8 = Conv2D(128, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+            UpSampling2D(size=(2, 2))(conv7))
 
         merge8 = concatenate([conv2, up8])
 
-        conv8 = Conv2D(128, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge8)
-        conv8 = Conv2D(128, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv8)
+        conv8 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge8)
+        conv8 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv8)
 
-        up9 = Conv2D(64, 2, activation='relu', padding='same',kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(conv8))
+        up9 = Conv2D(64, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+            UpSampling2D(size=(2, 2))(conv8))
 
         merge9 = concatenate([conv1, up9])
 
-        conv9 = Conv2D(64, 3, activation='relu', padding='same',kernel_initializer='he_normal')(merge9)
-        conv9 = Conv2D(64, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv9)
-        conv9 = Conv2D(2, 3, activation='relu', padding='same',kernel_initializer='he_normal')(conv9)
+        conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge9)
+        conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
+        conv9 = Conv2D(2, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
 
         conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
 
@@ -230,11 +190,11 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
         return model
 
-    model = build_model(input_size=(img_patch_size))
+    model = build_model(input_size=(patch_shape))
 
     history = model.fit(history=model.fit(patches_train_images,
                                           patches_train_labels,
-                                          batch_size=32,
+                                          batch_size=2,
                                           epochs=NUM_EPOCHS,
                                           validation_data=(patches_test_images, patches_test_labels)))
 
