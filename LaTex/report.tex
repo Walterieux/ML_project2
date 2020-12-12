@@ -129,7 +129,7 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 \end{figure}
 % TODO: comparison -> graph
 
-\textit{[ALEX NET]}
+\textit{[VGG 16 NET]}
 %TODO: our variant of alex net and its results
 
 \textit{[U-NET]}
@@ -168,13 +168,17 @@ To subvert this issue, we apply a convolution filter to the resulting prediction
 
 To validate our model we first experimented with k-fold cross validation. However, in order to get satisfactory results from the latter method, we would need to train our model multiple times for every implementation we designed. Since for most implementations a single training round can take a few hours, comparing our models using k-fold cross validation is not an option.
 
-% TODO: how do we validate? Division in train test and evaluation sets
+We thus evaluate our models on their validation and test accuracy (accuracies on validation and test sets respectively). The validation and test accuracies are obtained by splitting the data set into 3 parts, the first, major, part is used for training, the second for validating the model and the last is used to obtain the test accuracy. We randomize our data before splitting. The training is run for enough epochs, so as to allow the validation accuracy to be maximized for the implementation we are testing.
 
 \section{Final Design}
 \label{sec:final}
 
+%TODO: list all stuff used for final model
+
 \section{Results}
 \label{sec:results}
+
+%TODO: results
 
 \begin{table}[h]
 	\begin{tabular}{ |c|c| } 
@@ -197,5 +201,6 @@ To validate our model we first experimented with k-fold cross validation. Howeve
 \section{Conclusion}
 \label{sec:conclusion}
 
+%TODO: add refs section
 
 \end{document}
