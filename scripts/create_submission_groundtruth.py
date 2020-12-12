@@ -6,7 +6,7 @@ import cnn_training
 import tensorflow_addons
 import tensorflow_addons as tfa
 
-import scripts.use_borders_mathieu
+from use_borders_mathieu import create_patches_with_border
 
 img_patch_size = 16
 border_size = 16
@@ -64,7 +64,7 @@ def main():
 
     test_images = extract_test_images()
     # patches_images = cnn_training.create_patches(test_images, (img_patch_size, img_patch_size, 3))
-    patches_images = scripts.use_borders_mathieu.create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size,
+    patches_images = create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size,
                                                      "TEST IMAGES")
 
     model = keras.models.load_model("saved_model")
