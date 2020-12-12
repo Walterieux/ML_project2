@@ -21,8 +21,8 @@ from keras.models import load_model
 from keras.optimizers import Adam
 
 import scripts.create_submission_groundtruth
+from images_preproces import center
 from patches import create_patches
-from scripts.convolution import create_patches_from_training_or_test, apply_patches_for_array_of_images
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -45,7 +45,7 @@ def extract_images(image_path):
         img = imageio.imread(img_path)
         # img = img / 255.0
         # img = normalize_image(img)
-        imgs.append(img.astype('uint8'))
+        imgs.append(img.astype('float32'))
 
     return np.asarray(imgs)
 
@@ -184,11 +184,11 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
         conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
 
-        model = Model(inputs=inputs, outputs=conv10)
+        unet_model = Model(inputs=inputs, outputs=conv10)
 
-        model.compile(optimizer=Adam(lr=1e-3), loss='binary_crossentropy', metrics=['accuracy'])
+        unet_model.compile(optimizer='adamax', loss='binary_crossentropy', metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
 
-        return model
+        return unet_model
 
     model = build_model(input_size=(patch_shape))
 
@@ -285,10 +285,10 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    # train_images, mean, std = center(extract_images(training_training_data_path))
-    # test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
-    train_images = extract_images(training_training_data_path)
-    test_images = extract_images(training_test_data_path)
+    train_images, mean, std = center(extract_images(training_training_data_path))
+    test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
+    #train_images = extract_images(training_training_data_path)
+    #test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
 
