@@ -302,7 +302,10 @@ def create_patches_from_training_or_test(image, rgb_binary = True):
                 batches[i,:,:] = np.reshape(all_elements_of_batch,(input_size,input_size))
 
         else : 
+                print(elements_from_array)
+                #print(resize(elements_from_array.astype(int), (output_size, output_size)))
                 batches[i,:,:] = img_as_bool(resize(elements_from_array.astype(int), (output_size, output_size)))
+                #print(batches[i,:,:])
 
     #print("shape of each batch : ", np.shape(batches))
     return batches
@@ -336,7 +339,7 @@ def get_output_from_cnn_batch(batches_4,input_output):
     #take a pencil to understand 
     #small notes only for pr
     #2
-    output_image[0:-nb_elem_image:, -nb_elem_image: nb_elem_image] = output_image[0:-nb_elem_image, -nb_elem_image: nb_elem_image]/2
+    output_image[0:-nb_elem_image, -nb_elem_image: nb_elem_image] = output_image[0:-nb_elem_image, -nb_elem_image: nb_elem_image]/2
     #4
     output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image] = output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image]/2 
     #5
@@ -346,6 +349,8 @@ def get_output_from_cnn_batch(batches_4,input_output):
     #8
     output_image[nb_elem_image:,-nb_elem_image:nb_elem_image] = output_image[nb_elem_image:,-nb_elem_image:nb_elem_image]/2
     
+    print(output_image)
+    return output_image
 data_dir = '../data/'
 test_dir = data_dir + 'test_set_labels/'
 images = extract_images(test_dir)
@@ -358,16 +363,18 @@ groundtruth = data_dir + 'training/groundtruth/'
 
 
 #original_images = extract_images_test(original_img, 50)
-list_augmented = extract_images(groundtruth, divide_by255=False)
+"""list_augmented = extract_images(groundtruth, divide_by255=False)
+print(list_augmented)
 #list_augmented = extract_images(train_augmented, divide_by255=True)
 
 list_batches = apply_patches_for_array_of_images(list_augmented,rgb_binary = False )
 
 
 print("list_batches shape :", np.shape(list_batches))
-#get_output_from_cnn_batch(list_batches[:,:,0:4], 400 )
+plt.imshow(get_output_from_cnn_batch(list_batches[0:4,:,:], 400 ))
 
-
+b=np.array([1,2,3,4,5,6])
+print(b[0:-2])"""
 
 #apply_patches_for_array_of_images(list_groundtruth, rgb_binary=False)
 #get_number_of_not_normalised(list_augmented)
