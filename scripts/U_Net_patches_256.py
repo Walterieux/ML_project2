@@ -10,10 +10,12 @@ import time
 import imageio
 import glob
 from PIL import Image
+from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split, KFold
 
 from keras import Model
-from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D
+from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D, \
+    BatchNormalization, ReLU
 
 from images_preproces import center
 from patches import create_patches
@@ -111,28 +113,53 @@ def train_model(train_images, test_images, train_labels, test_labels):
     print("patches_train_images shape: ", patches_train_images.shape)
     print("patches_train_labels shape: ", patches_train_labels.shape)
 
-
     # https://github.com/ArkaJU/U-Net-Satellite/blob/master/U-Net.ipynb
     def build_model(input_size=(256, 256, 3)):
         inputs = Input(input_size)
 
-        conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
-        conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
+        conv1 = Conv2D(64, 3, padding='same', kernel_initializer='he_normal')(inputs)
+        conv1 = BatchNormalization()(conv1)
+        conv1 = ReLU()(conv1)
+        conv1 = Dropout(.10)(conv1)
+        conv1 = Conv2D(64, 3, padding='same', kernel_initializer='he_normal')(conv1)
+        conv1 = BatchNormalization()(conv1)
+        conv1 = ReLU()(conv1)
+        conv1 = Dropout(.10)(conv1)
 
         pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+        pool1 = Dropout(.10)(pool1)
 
-        conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool1)
-        conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv2)
+        conv2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(pool1)
+        conv2 = BatchNormalization()(conv2)
+        conv2 = ReLU()(conv2)
+        conv2 = Dropout(.10)(conv2)
+        conv2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(conv2)
+        conv2 = BatchNormalization()(conv2)
+        conv2 = ReLU()(conv2)
+        conv2 = Dropout(.10)(conv2)
 
         pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+        pool2 = Dropout(.10)(pool2)
 
-        conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool2)
-        conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv3)
+        conv3 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(pool2)
+        conv3 = BatchNormalization()(conv3)
+        conv3 = ReLU()(conv3)
+        conv3 = Dropout(.10)(conv3)
+        conv3 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(conv3)
+        conv3 = BatchNormalization()(conv3)
+        conv3 = ReLU()(conv3)
+        conv3 = Dropout(.10)(conv3)
 
         pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+        pool3 = Dropout(.10)(pool3)
 
-        conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool3)
-        conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv4)
+        conv4 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(pool3)
+        conv4 = BatchNormalization()(conv4)
+        conv4 = ReLU()(conv4)
+        conv4 = Dropout(.10)(conv4)
+        conv4 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(conv4)
+        conv4 = BatchNormalization()(conv4)
+        conv4 = ReLU()(conv4)
 
         drop4 = Dropout(0.5)(conv4)
 
@@ -178,19 +205,19 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
         conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
 
-        unet_model = Model(inputs=inputs, outputs=conv10)
+        model = Model(inputs=inputs, outputs=conv10)
 
-        unet_model.compile(optimizer='adamax', loss='binary_crossentropy', metrics=[tf.keras.metrics.BinaryAccuracy(threshold=0.25)])
+        model.compile(optimizer=Adam(lr=1e-3), loss='binary_crossentropy', metrics=['accuracy'])
 
-        return unet_model
+        return model
 
-    model = build_model(input_size=(patch_shape))
+    model = build_model(input_size=patch_shape)
 
-    history = model.fit(history=model.fit(patches_train_images,
-                                          patches_train_labels,
-                                          batch_size=2,
-                                          epochs=NUM_EPOCHS,
-                                          validation_data=(patches_test_images, patches_test_labels)))
+    history = model.fit(patches_train_images,
+                        patches_train_labels,
+                        batch_size=2,
+                        epochs=NUM_EPOCHS,
+                        validation_data=(patches_test_images, patches_test_labels))
 
     plt.plot(history.history['accuracy'], 'g', label="accuracy on train set")
     plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
@@ -200,6 +227,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.ylabel('Accuracy')
     plt.legend()
     plt.show()
+    plt.savefig('U_Net_patches_256.png')
 
     """
     training_test_predicted_labels = model.predict(patches_test_images)
@@ -281,10 +309,10 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    train_images, mean, std = center(extract_images(training_training_data_path))
-    test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
-    #train_images = extract_images(training_training_data_path)
-    #test_images = extract_images(training_test_data_path)
+    #train_images, mean, std = center(extract_images(training_training_data_path))
+    #test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
+    train_images = extract_images(training_training_data_path)
+    test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
     test_labels = extract_labels(training_test__labels_path)
 
