@@ -230,17 +230,22 @@ def apply_patches_for_array_of_images(image_list, rgb_binary =True):
      output : return a list of batches [output_size, output_size, 4*image_list.shape[0]] if rgb_binary =False
     
     """
+    print("shape of training images : ", np.shape(image_list))
     nb_patch_per_image = 4
     if rgb_binary == False: 
-        list_of_batches = np.zeros((output_size, output_size, 4*image_list.shape[0]))
+        list_of_batches = np.zeros((4*image_list.shape[0], output_size, output_size))
+        print("shape of list of batches : ", np.shape(list_of_batches))
+
     else : 
-        list_of_batches = np.zeros((input_size,  input_size, 4*image_list.shape[0]))
+        list_of_batches = np.zeros((4*image_list.shape[0], input_size,  input_size))
+        print("shape of list of batches : ", np.shape(list_of_batches))
     for number,image in enumerate(image_list):
         if rgb_binary == False: 
-            list_of_batches[:,:, number* nb_patch_per_image : (number+1) * nb_patch_per_image] = create_patches_from_training_or_test(image , rgb_binary = False,)
+            list_of_batches[number* nb_patch_per_image : (number+1) * nb_patch_per_image,:,:] = create_patches_from_training_or_test(image , rgb_binary = False,)
         else: 
                 
-            list_of_batches[:,:, number* nb_patch_per_image : (number+1) * nb_patch_per_image ] = create_patches_from_training_or_test(image)
+            list_of_batches[number* nb_patch_per_image : (number+1) * nb_patch_per_image,:,:] = create_patches_from_training_or_test(image)
+    print(np.shape(list_of_batches))
 
     return list_of_batches 
 
@@ -261,9 +266,9 @@ def create_patches_from_training_or_test(image, rgb_binary = True):
     nb_batches = 4
     nb_elem_image = 330
     if rgb_binary == True:
-        batches = np.zeros((input_size, input_size, nb_batches))
+        batches = np.zeros((nb_batches, input_size, input_size))
     else : 
-        batches = np.zeros((output_size, output_size, nb_batches))
+        batches = np.zeros((nb_batches, output_size, output_size))
     zeros_elem_not_from_image = 3*161 + 1
     
     for i in range(nb_batches): 
@@ -294,12 +299,12 @@ def create_patches_from_training_or_test(image, rgb_binary = True):
             
         if rgb_binary == True:
                 all_elements_of_batch = np.concatenate((elements_from_array,np.zeros(zeros_elem_not_from_image).astype(int)))
-                batches[:,:,i] = np.reshape(all_elements_of_batch,(input_size,input_size))
+                batches[i,:,:] = np.reshape(all_elements_of_batch,(input_size,input_size))
 
         else : 
-                batches[:,:, i] = img_as_bool(resize(elements_from_array.astype(int), (output_size, output_size)))
+                batches[i,:,:] = img_as_bool(resize(elements_from_array.astype(int), (output_size, output_size)))
 
-    
+    #print("shape of each batch : ", np.shape(batches))
     return batches
         
     
@@ -314,26 +319,23 @@ def get_output_from_cnn_batch(batches_4,input_output):
     --------------output ---------------------------------------------
     return groundtruth image
     """
-    print("output begins" )
-    nb_batches = 4
     nb_elem_image = 330
     input_output = 400
     output_image = np.zeros( (input_output, input_output ))
     
         
-            output_image[0:nb_elem_image,0:nb_elem_image] = resize(batches_4[:,:,0], (nb_elem_image, nb_elem_image))
-            
-            output_image[0:nb_elem_image,-nb_elem_image:] = resize(batches_4[:,:,1], (nb_elem_image, nb_elem_image))
-        
-            output_image[-nb_elem_image:,0:nb_elem_image] = resize(batches_4[:,:,2], (nb_elem_image, nb_elem_image))
-        
-            output_image[-nb_elem_image:,-nb_elem_image:] = resize(batches_4[:,:,3], (nb_elem_image, nb_elem_image))
+    output_image[0:nb_elem_image,0:nb_elem_image] = resize(batches_4[0,:,:], (nb_elem_image, nb_elem_image))
+    
+    output_image[0:nb_elem_image,-nb_elem_image:] = resize(batches_4[1,:,:], (nb_elem_image, nb_elem_image))
+
+    output_image[-nb_elem_image:,0:nb_elem_image] = resize(batches_4[2,:,:], (nb_elem_image, nb_elem_image))
+
+    output_image[-nb_elem_image:,-nb_elem_image:] = resize(batches_4[3,:,:], (nb_elem_image, nb_elem_image))
     
     #begin to be more though but here we try to recalculate the initial image, we haveto divide by 2, 3 or 4 to some place
     #take a pencil to understand 
     #small notes only for pr
     #2
-    print("for loop ends")
     output_image[0:-nb_elem_image:, -nb_elem_image: nb_elem_image] = output_image[0:-nb_elem_image, -nb_elem_image: nb_elem_image]/2
     #4
     output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image] = output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image]/2 
@@ -343,8 +345,7 @@ def get_output_from_cnn_batch(batches_4,input_output):
     output_image[-nb_elem_image:nb_elem_image, nb_elem_image:] = output_image[-nb_elem_image:nb_elem_image, nb_elem_image:]/2
     #8
     output_image[nb_elem_image:,-nb_elem_image:nb_elem_image] = output_image[nb_elem_image:,-nb_elem_image:nb_elem_image]/2
-    print(output_image.shape)
-
+    
 data_dir = '../data/'
 test_dir = data_dir + 'test_set_labels/'
 images = extract_images(test_dir)
@@ -353,18 +354,18 @@ original_img = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
 train_augmented = data_dir + 'training/data_augmented/'
 groundtruth = data_dir + 'training/groundtruth/'
+
+
+
+#original_images = extract_images_test(original_img, 50)
+list_augmented = extract_images(groundtruth, divide_by255=False)
 #list_augmented = extract_images(train_augmented, divide_by255=True)
 
-
-
-original_images = extract_images_test(original_img, 50)
-list_groundtruth = extract_images(groundtruth, divide_by255=False)
-
-list_batches = apply_patches_for_array_of_images(list_groundtruth,rgb_binary = False )
+list_batches = apply_patches_for_array_of_images(list_augmented,rgb_binary = False )
 
 
 print("list_batches shape :", np.shape(list_batches))
-get_output_from_cnn_batch(list_batches[:,:,0:4], 400 )
+#get_output_from_cnn_batch(list_batches[:,:,0:4], 400 )
 
 
 
