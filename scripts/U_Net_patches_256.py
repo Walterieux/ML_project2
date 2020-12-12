@@ -4,23 +4,17 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
-import tensorflow_addons as tfa
 import ipykernel
 import matplotlib.pyplot as plt
 import time
 import imageio
 import glob
 from PIL import Image
-from patchify import patchify, unpatchify
 from sklearn.model_selection import train_test_split, KFold
 
 from keras import Model
 from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D
-from keras.models import load_model
-from keras.optimizers import Adam
 
-import scripts.create_submission_groundtruth
 from images_preproces import center
 from patches import create_patches
 
@@ -207,13 +201,15 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.legend()
     plt.show()
 
+    """
     training_test_predicted_labels = model.predict(patches_test_images)
-    unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
+    unpatched_labels = create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
                                                                             test_images.shape[0],
                                                                             img_shape)
-    scripts.create_submission_groundtruth.save_labels(unpatched_labels,
+    create_submission_groundtruth.save_labels(unpatched_labels,
                                                       "../data/training_test/data_augmented_predicted_labels/")
 
+    """
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
     return model, test_loss, test_acc
