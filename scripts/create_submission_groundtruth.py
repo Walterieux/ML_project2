@@ -33,7 +33,7 @@ def unpatch_labels(data, images_num, img_shape):
     """
     Unpatchify the given data to the original image shape
     """
-
+    
     labels = []
     num_pat_per_img = int((img_shape[0]/img_patch_size) ** 2)
     for i in range(0, images_num):
