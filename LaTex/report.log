@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  8 DEC 2020 15:18
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  12 DEC 2020 11:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -344,12 +344,12 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <7> on input line 38.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 38.
-<correlation.png, id=37, 433.62pt x 289.08pt>
+<correlation.png, id=45, 433.62pt x 289.08pt>
 File: correlation.png Graphic file (type png)
 <use correlation.png>
 Package pdftex.def Info: correlation.png  used on input line 50.
 (pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
-<grid_search.png, id=39, 433.62pt x 289.08pt>
+<grid_search.png, id=47, 433.62pt x 289.08pt>
 File: grid_search.png Graphic file (type png)
 <use grid_search.png>
 Package pdftex.def Info: grid_search.png  used on input line 57.
@@ -362,11 +362,15 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 
 
  <./correlation.png> <./grid_search.png>]
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 7
-9.
- (c:/texlive/2019/texmf-dist/tex/latex/psnfss/ot1pcr.fd
-File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
-)
+File: correlation.png Graphic file (type png)
+<use correlation.png>
+Package pdftex.def Info: correlation.png  used on input line 117.
+(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
+File: grid_search.png Graphic file (type png)
+<use grid_search.png>
+Package pdftex.def Info: grid_search.png  used on input line 124.
+(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
+
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -378,37 +382,36 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 137.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 177.
 [2]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 137.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 177.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 137.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 137.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 177.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 177.
 Package rerunfilecheck Info: File `report.out' has not changed.
-(rerunfilecheck)             Checksum: E06EE6D1C83F01974D2604A744C78720;496.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 137.
+(rerunfilecheck)             Checksum: 058977E4F54672205BE4F1DCF3C206E5;594.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 177.
  ) 
 Here is how much of TeX's memory you used:
- 7008 strings out of 480994
- 113894 string characters out of 5916032
- 376774 words of memory out of 5000000
- 22417 multiletter control sequences out of 15000+600000
- 566834 words of font info for 83 fonts, out of 8000000 for 9000
+ 6980 strings out of 480994
+ 113496 string characters out of 5916032
+ 378021 words of memory out of 5000000
+ 22391 multiletter control sequences out of 15000+600000
+ 566319 words of font info for 81 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  41i,8n,42p,824b,430s stack positions out of 5000i,500n,10000p,200000b,80000s
 {c:/texlive/2019/texmf-dist/fonts/enc/dvips/base/8r.enc}<c:/texlive/2019/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/texlive/2019/texmf-dist/fon
 ts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/p
 ublic/amsfonts/cm/cmr8.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmsy10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/courier/ucrr8a.pf
-b><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2019
-/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb><c:/texlive/2019/texmf-dist/fonts
-/type1/urw/times/utmr8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/u
-tmri8a.pfb>
-Output written on report.pdf (2 pages, 124942 bytes).
+nts/cm/cmsy10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmb8a.pfb>
+<c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb><c:/texlive/2019/
+texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2019/texmf-dist/fonts/t
+ype1/urw/times/utmri8a.pfb>
+Output written on report.pdf (2 pages, 119586 bytes).
 PDF statistics:
- 100 PDF objects out of 1000 (max. 8388607)
- 82 compressed objects within 1 object stream
- 13 named destinations out of 1000 (max. 500000)
- 75 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 106 PDF objects out of 1000 (max. 8388607)
+ 89 compressed objects within 1 object stream
+ 16 named destinations out of 1000 (max. 500000)
+ 91 words of extra memory for PDF output out of 10000 (max. 10000000)
 
