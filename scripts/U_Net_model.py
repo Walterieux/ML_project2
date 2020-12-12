@@ -16,8 +16,14 @@ from patchify import patchify, unpatchify
 from sklearn.model_selection import train_test_split, KFold
 
 from tensorflow.keras import layers, models
-from tensorflow.python.keras.layers import Dense, Dropout, MaxPooling2D, LeakyReLU, ReLU
+from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, LeakyReLU, ReLU
+from tensorflow_core.python.keras import Input
+from tensorflow_core.python.keras.layers import Conv2DTranspose, concatenate
+from tensorflow_core.python.keras.models import Model
+from tensorflow_core.python.keras.optimizers import Adam
+
 import scripts.create_submission_groundtruth
+from scripts.convolution import create_patches_from_training_or_test
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
@@ -41,8 +47,8 @@ def extract_images(image_path):
     for img_path in glob.glob(image_path + "/*.png"):
         img = imageio.imread(img_path)
         # img = img / 255.0
-        img = normalize_image(img)
-        imgs.append(img.astype('float32'))
+        #img = normalize_image(img)
+        imgs.append(img.astype('uint8'))
 
     return np.asarray(imgs)
 
@@ -149,126 +155,102 @@ def train_model(train_images, test_images, train_labels, test_labels):
     print("percentage road: ", percentage_road)
 
     # create mini_patches
-    # patches_train_images = create_patches(train_images, (img_patch_size, img_patch_size, 3))
-    # patches_test_images = create_patches(test_images, (img_patch_size, img_patch_size, 3))
-    patches_train_labels = create_patches(train_labels, (img_patch_size, img_patch_size))
-    patches_test_labels = create_patches(test_labels, (img_patch_size, img_patch_size))
+    patches_train_images = np.array(
+        [create_patches_from_training_or_test(train_image) for train_image in
+         train_images])
+    patches_test_images = np.array(
+        [create_patches_from_training_or_test(test_image) for test_image in
+         test_images])
+    patches_train_labels = np.array(
+        [create_patches_from_training_or_test(train_label, rgb_binary=False) for
+         train_label in train_labels])
+    patches_test_labels = np.array(
+        [create_patches_from_training_or_test(test_label, rgb_binary=False) for
+         test_label in test_labels])
 
-    patches_train_images = create_patches_with_border(train_images, (img_patch_size, img_patch_size, 3), border_size,
-                                                      "TRAIN IMAGES")
-    patches_test_images = create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size,
-                                                     "TEST IMAGES")
-    """
-    patches_train_labels = create_patches_with_border(train_labels, (img_patch_size, img_patch_size), border_size,
-                                                      "TRAIN LABELS")
-    patches_test_labels = create_patches_with_border(test_labels, (img_patch_size, img_patch_size), border_size,
-                                                     "TEST LABELS")
-    """
+    print("patches_train_images shape: ", patches_train_images.shape)
+    print("patches_train_labels shape: ", patches_train_labels.shape)
 
-    print("train label shape: ", patches_train_labels.shape)
-    patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
-    patches_test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
+    # patches_train_labels = characterise_each_patch_as_road_or_not(patches_train_labels)
+    # patches_test_labels = characterise_each_patch_as_road_or_not(patches_test_labels)
 
-    # First model
-    model = models.Sequential()
+    # https://towardsdatascience.com/unet-line-by-line-explanation-9b191c76baf5
+    def build_model(input_size, start_neurons):
+        inputs = Input(input_size)
+        conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(inputs)
+        conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(conv1)
+        pool1 = MaxPooling2D((2, 2))(conv1)
+        pool1 = Dropout(0.25)(pool1)
 
-    # literature https://www.kdnuggets.com/2017/11/understanding-deep-convolutional-neural-networks-tensorflow-keras.html/2
-    # Inspired from https://fractalytics.io/rooftop-detection-with-keras-tensorflow
+        conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(pool1)
+        conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(conv2)
+        pool2 = MaxPooling2D((2, 2))(conv2)
+        pool2 = Dropout(0.5)(pool2)
 
-    # https://www.learnopencv.com/understanding-alexnet/ dropout 0.5
+        conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(pool2)
+        conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(conv3)
+        pool3 = MaxPooling2D((2, 2))(conv3)
+        pool3 = Dropout(0.5)(pool3)
 
-    """ ~ Model from Stanford University: https://youtu.be/bNb2fEVKeEo?t=3683"""
-    model.add(
-        layers.Conv2D(64, kernel_size=(3, 3), padding='same',
-                      input_shape=(img_patch_with_border_size, img_patch_with_border_size, 3)))  # TODO change this
-    """
-    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7873262
-    Batch Normalization Layer:The batch normalization (BN)was  introduced by  Ioffe  and  Szegedy  [43]  to  avoid
-    gradient vanishing  and  reduce  internal  covariate  shift  (the  change  in the input distribution to a learning
-    system).
-    """
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.Conv2D(64, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.MaxPool2D((2, 2), padding='same'))
-    # http://mipal.snu.ac.kr/images/1/16/Dropout_ACCV2016.pdf
-    model.add(Dropout(.10))  # Avoid overfitting
-    # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+        conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(pool3)
+        conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(conv4)
+        pool4 = MaxPooling2D((2, 2))(conv4)
+        pool4 = Dropout(0.5)(pool4)
 
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.Conv2D(128, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    # model.add(layers.MaxPool2D((3, 3), strides=(2, 2),  padding='same'))
-    model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.10))
-    # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+        # Middle
+        convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(pool4)
+        convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(convm)
 
-    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))  # TODO bigger kernel size?
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.Conv2D(256, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.ReLU())
-    model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
-    model.add(layers.MaxPool2D((2, 2), padding='same'))
-    model.add(Dropout(.10))
-    # model.add(tf.keras.layers.SpatialDropout2D(rate=0.10))
+        deconv4 = Conv2DTranspose(start_neurons * 8, (3, 3), strides=(2, 2), padding="same")(convm)
+        uconv4 = concatenate([deconv4, conv4])
+        uconv4 = Dropout(0.5)(uconv4)
+        uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
+        uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
 
-    model.add(layers.Flatten())
-    # model.add(Dropout(.5))
-    model.add(layers.Dense(512))
-    model.add(tf.keras.layers.ReLU())
-    model.add(Dropout(.5))
-    model.add(layers.Dense(512))
-    model.add(tf.keras.layers.ReLU())
-    model.add(Dropout(.5))
+        deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding="same")(uconv4)
+        uconv3 = concatenate([deconv3, conv3])
+        uconv3 = Dropout(0.5)(uconv3)
+        uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
+        uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
 
-    # model.add(layers.Dense(1024))
-    # model.add(tf.keras.layers.ReLU())
-    # model.add(Dropout(.5))
-    model.add(layers.Dense(1, activation='sigmoid'))
+        deconv2 = Conv2DTranspose(start_neurons * 2, (3, 3), strides=(2, 2), padding="same")(uconv3)
+        uconv2 = concatenate([deconv2, conv2])
+        uconv2 = Dropout(0.5)(uconv2)
+        uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
+        uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
 
-    model.summary()
+        deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding="same")(uconv2)
+        uconv1 = concatenate([deconv1, conv1])
+        uconv1 = Dropout(0.5)(uconv1)
+        uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
+        uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
 
-    model.compile(optimizer='adamax',
-                  loss='binary_crossentropy',
-                  # metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
-                  metrics=[tfa.metrics.F1Score(num_classes=1, threshold=0.5)])
+        output_layer = Conv2D(1, (1, 1), padding="same", activation="sigmoid")(uconv1)
 
-    history = model.fit(patches_train_images,
-                        patches_train_labels,
-                        batch_size=128,
-                        epochs=NUM_EPOCHS,
-                        validation_data=(patches_test_images, patches_test_labels))
-    #TODO check history labels
-    """
-    plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
-    plt.plot(history.history['val_binary_accuracy'], 'r', label="accuracy on validation set")
+        model = Model(inputs=inputs, outputs=output_layer)
+
+        model.compile(optimizer=Adam(lr=1e-3), loss='binary_crossentropy', metrics=['accuracy'])
+
+        return model
+
+    model = build_model(input_size=(572, 572, 1), start_neurons=16)
+
+    history = model.fit(history=model.fit(patches_train_images,
+                                patches_train_labels,
+                                batch_size=32,
+                                epochs=NUM_EPOCHS,
+                                validation_data=(patches_test_images, patches_test_labels)))
+
+
+    plt.plot(history.history['accuracy'], 'g', label="accuracy on train set")
+    plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
     plt.grid(True)
     plt.title('Training Accuracy vs. Validation Accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
     plt.show()
-    """
+
 
     training_test_predicted_labels = model.predict(patches_test_images)
     unpatched_labels = scripts.create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
