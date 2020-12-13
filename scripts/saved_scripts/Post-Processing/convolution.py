@@ -364,12 +364,12 @@ train_augmented = data_dir + 'training/data_augmented/'
 groundtruth = data_dir + 'training/groundtruth/'
 
 # original_images = extract_images_test(original_img, 50)
-list_augmented = extract_images(groundtruth, divide_by255=False)
+# list_augmented = extract_images(groundtruth, divide_by255=False)
 # list_augmented = extract_images(train_augmented, divide_by255=True)
 
-list_batches = apply_patches_for_array_of_images(list_augmented, rgb_binary=False)
+# list_batches = apply_patches_for_array_of_images(list_augmented, rgb_binary=False)
 
-print("list_batches shape :", np.shape(list_batches))
+# print("list_batches shape :", np.shape(list_batches))
 # get_output_from_cnn_batch(list_batches[:,:,0:4], 400 )
 
 
