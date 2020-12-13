@@ -19,30 +19,37 @@ def separate_data():
     data_dir = '../data/'
     data_dir_training = data_dir + 'training/'
     data_dir_training_training = data_dir + 'training_training/'
+    data_dir_training_validation = data_dir + 'training_validation/'
     data_dir_training_test = data_dir + 'training_test/'
     list_of_features = ["data_augmented/", "data_augmented_distance/", "data_augmented_edges/",
                         "data_augmented_groundtruth/", "data_augmented_norm/"]
-    choices = np.random.choice(np.linspace(1, 100, 100), 90, replace=False).astype(int)
-    choices_test = np.zeros(10).astype(int)
-    counter = 0
+    choices = np.random.choice(np.linspace(1, 100, 100), 80, replace=False).astype(int)
+    choices_not_training = np.zeros(20).astype(int)
+   
+    counter = 0 
     for index in range(1, 101):
         if np.isin(index, choices) == False:
-            choices_test[counter] = int(index)
-            counter += 1
-
+            choices_not_training[counter] = int(index)
+            counter+=1
+    choices_validation = choices_not_training[0:10]
+    choices_test = choices_not_training[-10:]
     # choices_test = np.delete(np.linspace(1,100,100).astype(int),choices ).astype(int)
-    print(choices_test)
-    print(choices)
+    
     for number, feature in enumerate(list_of_features):
+        
         directory_to_read = data_dir_training + feature
+        
         directory_to_training = data_dir_training_training + feature
         data_dir_test = data_dir_training_test + feature
+        data_dir_val = data_dir_training_validation + feature
+        
         imgs_train = extract_img_from_list(directory_to_read, choices)
         imgs_test = extract_img_from_list(directory_to_read, choices_test)
-        print(data_dir_training_test)
+        imgs_val = extract_img_from_list(directory_to_read, choices_validation)
+        
         store_list_img(directory_to_training, imgs_train)
         store_list_img(data_dir_test, imgs_test)
-
+        store_list_img(data_dir_val, imgs_val)
 
 def extract_img_from_list(filename, list_of_number):
     imgs = []
@@ -362,31 +369,4 @@ groundtruth = data_dir + 'training/groundtruth/'
 
 
 
-#original_images = extract_images_test(original_img, 50)
-"""list_augmented = extract_images(groundtruth, divide_by255=False)
-print(list_augmented)
-#list_augmented = extract_images(train_augmented, divide_by255=True)
-
-list_batches = apply_patches_for_array_of_images(list_augmented,rgb_binary = False )
-
-
-print("list_batches shape :", np.shape(list_batches))
-plt.imshow(get_output_from_cnn_batch(list_batches[0:4,:,:], 400 ))
-
-b=np.array([1,2,3,4,5,6])
-print(b[0:-2])"""
-
-#apply_patches_for_array_of_images(list_groundtruth, rgb_binary=False)
-#get_number_of_not_normalised(list_augmented)
-
-#image_filename = '../data/test_set_labels/satImage_' + '%.3d' % i + '.png'
-
-
-
 #separate_data()
-
-
-#original_images = extract_images_test(original_img, 50)
-#get_number_of_not_normalised(original_images)
-#images = extract_images(test_dir)
-#submission_convolution(correct_labels, images, filename_comparaison,original_images, comparaison=True)
