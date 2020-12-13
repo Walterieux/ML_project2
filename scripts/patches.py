@@ -78,13 +78,9 @@ def get_output_from_patches_with_mean(patches_list, output_shape):
         nb_elem_images = np.zeros(output_shape)
         for i in range(nb_matrix_by_row):
             for j in range(nb_matrix_by_row):
-                #print("shape of recons : ", np.shape(reconstructed_images[i*step_length: i*step_length + img_patch_size, j*step_length: j*step_length + img_patch_size]) )
-                #print("début : ",j*step_length , "fin :", j*step_length + img_patch_size )
                 reconstructed_images[i*step_length: i*step_length + img_patch_size, j*step_length: j*step_length + img_patch_size] += patches_list[number*nb_elem_by_patch + i *nb_matrix_by_row + j]
                 nb_elem_images[i*step_length: i*step_length + img_patch_size, j*step_length: j*step_length + img_patch_size]+=1
         reconstructed_images = np.divide(reconstructed_images, nb_elem_images)
-        #reconstructed_images = np.reshape(1, output_shape[0],output_shape[1])
-        print("shape of reconstructed_images : ", reconstructed_images.shape)
         images.extend([reconstructed_images])
         
     return images
@@ -104,11 +100,5 @@ original_img = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
 train_augmented = data_dir + 'training/data_augmented/'
 groundtruth = data_dir + 'training/groundtruth/'
-list_groundtruth = extract_images(groundtruth, divide_by255=False)
-list_patches = create_patches(list_groundtruth, (256, 256 ))
-print(list_patches.shape)
-print("hello")
-list_of_images_groundtruth = get_output_from_patches_with_mean(list_patches, (400, 400))
-print(np.shape(list_of_images_groundtruth))
-plt.imshow(list_of_images_groundtruth[0])
+
 
