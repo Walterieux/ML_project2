@@ -17,7 +17,7 @@ from keras import Model
 from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D, \
     BatchNormalization, ReLU
 
-import create_submission_groundtruth
+from create_submission_groundtruth import extract_test_images, save_labels
 from images_preproces import center
 from patches import create_patches, get_output_from_patches
 
@@ -28,6 +28,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 patch_shape = (256, 256, 3)
 img_shape = (400, 400)
+test_img_shape = (608, 608)
 NUM_EPOCHS = 100
 
 
@@ -231,9 +232,10 @@ def train_model(train_images, test_images, train_labels, test_labels):
     plt.savefig('U_Net_patches_256.png')
 
     training_test_predicted_labels = model.predict(patches_test_images)
-    unpatched_labels = get_output_from_patches(training_test_predicted_labels, img_shape)
-    create_submission_groundtruth.save_labels(unpatched_labels,
-                                              "../data/training_test/data_augmented_predicted_labels/")
+    unpatched_labels = np.asarray(get_output_from_patches(training_test_predicted_labels, img_shape))
+    unpatched_labels = unpatched_labels.reshape((-1, *train_labels[0].shape))
+    print("unpatched_labels shape: ", unpatched_labels.shape)
+    save_labels(unpatched_labels, "../data/training_test/data_augmented_predicted_labels/")
 
     test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
@@ -316,6 +318,16 @@ def main():
     # model = train_test_split_training(images, labels, 0.9)
     model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
     model.save("saved_model")
+
+    submission_images = extract_test_images()
+    submission_images_patches = create_patches(submission_images, patch_shape)
+
+    test_test_predicted_labels = model.predict(submission_images_patches)
+    unpatched_labels = np.asarray(get_output_from_patches(test_test_predicted_labels, test_img_shape))
+    print("unpatched_labels shape: ", unpatched_labels.shape)
+    unpatched_labels = unpatched_labels.reshape((-1, *test_img_shape))
+
+    save_labels(unpatched_labels, "../data/test_set_labels/")
 
     end = time.time()
     print("Computation time: ", end - start)
