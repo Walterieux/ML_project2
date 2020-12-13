@@ -79,7 +79,7 @@ def represent_predicted_labels(given, first_pred, second_pred):
     img.show()
 
 
-def train_model(train_images, test_images, train_labels, test_labels):
+def train_model(train_images, validation_images, test_images, train_labels, validation_labels, test_labels):
     """
     Train a predefined model with the given data
 
@@ -106,9 +106,12 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     # create mini_patches
     patches_train_images = create_patches(train_images, patch_shape)
+    patches_validation_images = create_patches(validation_images, patch_shape)
     patches_test_images = create_patches(test_images, patch_shape)
     patches_train_labels = create_patches(train_labels, (patch_shape[0], patch_shape[1]))
     patches_train_labels = patches_train_labels[:, :, :, None]
+    patches_validation_labels = create_patches(validation_labels, (patch_shape[0], patch_shape[1]))
+    patches_validation_labels = patches_validation_labels[:, :, :, None]
     patches_test_labels = create_patches(test_labels, (patch_shape[0], patch_shape[1]))
     patches_test_labels = patches_test_labels[:, :, :, None]
 
@@ -119,46 +122,48 @@ def train_model(train_images, test_images, train_labels, test_labels):
     def build_model(input_size=(256, 256, 3)):
         inputs = Input(input_size)
 
+        drop_rate = 0.15
+
         conv1 = Conv2D(64, 3, padding='same', kernel_initializer='he_normal')(inputs)
         conv1 = BatchNormalization()(conv1)
         conv1 = ReLU()(conv1)
-        conv1 = Dropout(.10)(conv1)
+        conv1 = SpatialDropout2D(drop_rate)(conv1)
         conv1 = Conv2D(64, 3, padding='same', kernel_initializer='he_normal')(conv1)
         conv1 = BatchNormalization()(conv1)
         conv1 = ReLU()(conv1)
-        conv1 = Dropout(.10)(conv1)
+        conv1 = SpatialDropout2D(drop_rate)(conv1)
 
         pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
-        pool1 = Dropout(.10)(pool1)
+        pool1 = Dropout(drop_rate)(pool1)
 
         conv2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(pool1)
         conv2 = BatchNormalization()(conv2)
         conv2 = ReLU()(conv2)
-        conv2 = Dropout(.10)(conv2)
+        conv2 = SpatialDropout2D(drop_rate)(conv2)
         conv2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(conv2)
         conv2 = BatchNormalization()(conv2)
         conv2 = ReLU()(conv2)
-        conv2 = Dropout(.10)(conv2)
+        conv2 = SpatialDropout2D(drop_rate)(conv2)
 
         pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
-        pool2 = Dropout(.10)(pool2)
+        pool2 = Dropout(drop_rate)(pool2)
 
         conv3 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(pool2)
         conv3 = BatchNormalization()(conv3)
         conv3 = ReLU()(conv3)
-        conv3 = Dropout(.10)(conv3)
+        conv3 = SpatialDropout2D(drop_rate)(conv3)
         conv3 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(conv3)
         conv3 = BatchNormalization()(conv3)
         conv3 = ReLU()(conv3)
-        conv3 = Dropout(.10)(conv3)
+        conv3 = SpatialDropout2D(drop_rate)(conv3)
 
         pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
-        pool3 = Dropout(.10)(pool3)
+        pool3 = Dropout(drop_rate)(pool3)
 
         conv4 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(pool3)
         conv4 = BatchNormalization()(conv4)
         conv4 = ReLU()(conv4)
-        conv4 = Dropout(.10)(conv4)
+        conv4 = SpatialDropout2D(drop_rate)(conv4)
         conv4 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(conv4)
         conv4 = BatchNormalization()(conv4)
         conv4 = ReLU()(conv4)
@@ -166,9 +171,15 @@ def train_model(train_images, test_images, train_labels, test_labels):
         drop4 = Dropout(0.5)(conv4)
 
         pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
+        pool4 = Dropout(drop_rate)(pool4)
 
-        conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool4)
-        conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv5)
+        conv5 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal')(pool4)
+        conv5 = BatchNormalization()(conv5)
+        conv5 = ReLU()(conv5)
+        conv5 = SpatialDropout2D(drop_rate)(conv5)
+        conv5 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal')(conv5)
+        conv5 = BatchNormalization()(conv5)
+        conv5 = ReLU()(conv5)
 
         drop5 = Dropout(0.5)(conv5)
 
@@ -209,7 +220,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
         model = Model(inputs=inputs, outputs=conv10)
 
-        model.compile(optimizer=Adam(lr=1e-3), loss='binary_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer='adamax', loss='binary_crossentropy', metrics=['accuracy'])  # TODO F1-score
 
         return model
 
@@ -217,9 +228,9 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=2,
+                        batch_size=16,
                         epochs=NUM_EPOCHS,
-                        validation_data=(patches_test_images, patches_test_labels))
+                        validation_data=(patches_validation_images, patches_validation_labels))
 
     plt.plot(history.history['accuracy'], 'g', label="accuracy on train set")
     plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
@@ -305,19 +316,24 @@ def main():
     data_dir = '../data/'
     training_training_data_path = data_dir + 'training_training/data_augmented'
     training_training_labels_path = data_dir + 'training_training/data_augmented_groundtruth'
+    training_validation_data_path = data_dir + 'training_validation/data_augmented'
+    training_validation_labels_path = data_dir + 'training_validation/data_augmented_groundtruth'
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
     # train_images, mean, std = center(extract_images(training_training_data_path))
     # test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
     train_images = extract_images(training_training_data_path)
+    validation_images = extract_images(training_validation_data_path)
     test_images = extract_images(training_test_data_path)
     train_labels = extract_labels(training_training_labels_path)
+    validation_labels = extract_labels(training_validation_labels_path)
     test_labels = extract_labels(training_test__labels_path)
 
     # model = train_test_split_training(images, labels, 0.9)
-    model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
-    model.save("saved_model")
+    model, test_loss, test_acc = train_model(train_images, validation_images, test_images, train_labels,
+                                             validation_labels, test_labels)
+    # model.save("saved_model")
 
     submission_images = extract_test_images()
     submission_images_patches = create_patches(submission_images, patch_shape)
@@ -325,7 +341,7 @@ def main():
     test_test_predicted_labels = model.predict(submission_images_patches)
     unpatched_labels = np.asarray(get_output_from_patches(test_test_predicted_labels, test_img_shape))
     print("unpatched_labels shape: ", unpatched_labels.shape)
-    unpatched_labels = unpatched_labels.reshape((-1, *test_img_shape))
+    unpatched_labels = unpatched_labels.reshape((-1, *test_img_shape, 1))
 
     save_labels(unpatched_labels, "../data/test_set_labels/")
 
