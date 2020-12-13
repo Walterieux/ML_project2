@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split, KFold
 
 from keras import Model
 from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D, \
-    BatchNormalization, ReLU
+    BatchNormalization, ReLU, SpatialDropout2D
 
 from create_submission_groundtruth import extract_test_images, save_labels
 from images_preproces import center
@@ -29,7 +29,7 @@ tf.compat.v1.keras.backend.set_session(session)
 patch_shape = (256, 256, 3)
 img_shape = (400, 400)
 test_img_shape = (608, 608)
-NUM_EPOCHS = 100
+NUM_EPOCHS = 1
 
 
 def extract_images(image_path):
@@ -228,12 +228,15 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=16,
+                        batch_size=2,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_validation_images, patches_validation_labels))
 
+    test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
+
     plt.plot(history.history['accuracy'], 'g', label="accuracy on train set")
     plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
+    plt.hlines(test_acc, 0, NUM_EPOCHS, label="accuracy on test set")
     plt.grid(True)
     plt.title('Training Accuracy vs. Validation Accuracy')
     plt.xlabel('Epochs')
@@ -247,8 +250,6 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
     unpatched_labels = unpatched_labels.reshape((-1, *train_labels[0].shape))
     print("unpatched_labels shape: ", unpatched_labels.shape)
     save_labels(unpatched_labels, "../data/training_test/data_augmented_predicted_labels/")
-
-    test_loss, test_acc = model.evaluate(patches_test_images, patches_test_labels)
 
     return model, test_loss, test_acc
 
