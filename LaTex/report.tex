@@ -1,5 +1,12 @@
 \documentclass[10pt,conference,compsocconf]{IEEEtran}
 
+\makeatletter
+\def\endthebibliography{%
+	\def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+	\endlist
+}
+\makeatother
+
 \usepackage{hyperref}
 \usepackage{graphicx}	% For figure environment
 \usepackage{caption}
@@ -30,7 +37,7 @@
 
 \section{Introduction}
 
-% TODO : Sum up the process of data extension and CNN design. 
+This project aims at creating a model capable of classifying satellite image regions as road or non-road, i.e. background. We are given a set of $100$ satellite images to work on. This set has to be augmented and split, so that we can use it to train and validate our model. The implemented training method is a convolutional neural network, enhanced with post-processing. The report also details various implementations, both successful and unsuccessful, made in terms of pre-processing, neural net design and post-processing.
 
 
 \section{The Google Maps Satellite Images Data Set}
@@ -42,7 +49,6 @@ In section \ref{ssec:data_proc} we describe how the data set is enlarged and how
 
 \section{Models and Methods}
 \label{sec:methods}
-
 
 \begin{figure}[h]
 	\centering
@@ -61,56 +67,126 @@ In section \ref{ssec:data_proc} we describe how the data set is enlarged and how
 	\end{minipage}
 \end{figure}
 
-\subsection{Creating a Large Data Set} 
+\subsection{Data Pre-Processing} 
 \label{ssec:data_proc}
 
-We use a variety of methods and combine them in order to have a lot of data available to train our CNN. 
+We experimented with various methods in order to enhance and modify our given data set. Let us examine these methods and sum up which of them proved useful, and which did not.
 
-Firstly, although we only have $100$ images at our disposal for training, we actually train on smaller images that are subsets of the given images. For example, we can choose to train on images of size $20 \times 20$ pixels. This means that we get $400$ training input sets for one single image (the given images have size $400 \times 400$). We are effectively partitioning large images into many small images, which has the added benefit of reducing the parameter count of our CNN.
+\textit{[PATCHES]}   
+Firstly, although we only have $100$ images at our disposal for training, we actually train on smaller images that are subsets of the given images, we call them patches. For example, we can choose to train on images of size $20 \times 20$ pixels. This means that we get $400$ training input sets for one single image (the given images have size $400 \times 400$). We are effectively partitioning large images into many small images, which has the added benefit of reducing the parameter count of our CNN.
 
+\textit{[TRANSFORMATIONS]}   
 Another common way to enlarge a data set, which we use, is to apply various transformations on the original images. By rotating, cropping and flipping a large scale image, we can obtain many variations of that image which prove very useful for training. Note that in this process we might lose image resolution, for example if we rotate and then crop. However that loss of resolution is effectively a zoom, another transformation. Any additional transformed images can only increase the sturdiness of our trained model. 
 
 More specifically, we rotate the training images by multiples of $45$ degrees. When necessary, (for example when doing $45$ degree rotations) we crop the images so as to avoid the resulting black areas. In cases where cropping is necessary, we lose close to one third of the image's resolution and content. To counterbalance this, we upscale those images. That way, all resulting images share the exact same size. This process leaves us with $800$ images after processing the original $100$. To further increase the size of our training data set, we mirror every image over its vertical axis. Eventually, we find ourselves with a total of $1600$ images to train our model on.
 
+\textit{[EDGES]}   
 We explored further ways of increasing the amount of input data we can feed to our CNN. One way to attain this, is to give as input the edges found in an image, along with the pixels of that image. We process the gray-scale converted image with a Sobel filter using the Scipy library. This yields a gray-scale image indicating where edges are to be found. We do not extract vectors from the resulting gray-scale picture, but only give the latter's pixels as an additional input to our CNN.
 
+\textit{[DISTANCE]}   
 One additional information we extract and feed to our CNN, is what we like to call the \textit{distance} of an image. This  \textit{distance} is the norm of the vector we obtain as a result of subtracting from every pixel's RGB value a value we call the \textit{mean road RGB color}. We compute the \textit{mean road RGB color} by averaging all RGB colors that are known to represent a piece of road, i.e. all pixels of our training set that we know to be part of a road (by looking at the ground-truth images). The \textit{distance} of an image can thus be represented as another image, of identical dimensions. It is an image that represents, at every pixel, how closely the color of the latter resembles the known color of a road. The resulting image can be fed to our CNN as additional data.
 
-However, extracting edges from images and using the image \textit{distance} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good CNN will automatically learn those features. That is why, do not go into detail about implementations using these features, since the results obtained were not up to our expectations. The implementations can be found in the script \texttt{cnn\_on\_2\_extracted\_features.py}.
-
+\textit{[STANDARDIZATION]}   
+Finally, we also perform standardization of our data. 
 %TODO: add standardization
 
 
-\subsection{Evolution of Our Convolutional Neural Network} 
+However, both methods \textit{EDGES} and \textit{DISTANCE} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good neural net will automatically learn those features. The method \textit{PATCHES} is not just useful, it is necessary. In fact, to limit parameter count, it is good to work on smaller inputs (and outputs). We will detail in later sections the patch sizes used for various designs. \textit{TRANSFORMATIONS} proved extremely useful as well.
+%TODO: standardization?
+
+
+
+\subsection{Evolution of Our Neural Network} 
 \label{ssec:technique}
 
-In the following we will discuss several CNN designs we experimented with, both successful and unsuccessful. We will also detail the design of our final CNN, showing which methods we experimented with were useful and included in our final design.
+In the following we will discuss several CNN designs we experimented with, both successful and unsuccessful. For will name every design / method, so that we can reference them later on.
 
-Before we dive into the detailed CNN designs we developed, let us list a few general ideas we experimented with. One first such idea is to use a combination of two or more convolutional neural networks. In our case, we tried using two CNNs one after the other. The second convolutional neural network takes as input the predictions made by the model resulting from the first CNN. In this design, the second CNN mainly acts as some kind of image filter that tries to fix the mistakes made by the first one. In fact, whereas the second convolutional neural network nicely fills missing gaps in road prediction for some images, it also creates non existing roads in the resulting predictions.
+Before we dive into the detailed neural net designs we developed, let us list a few general ideas we experimented with.
 
-Another idea would be to use two or more convolutional neural networks in parallel, and for example, merge their results using another (following-up) CNN. In this case, we would need to apply those parallel convolutional neural networks on different inputs. However, as mentioned in section \ref{ssec:data_proc}, using inputs other than the images' RGB values is unnecessary, or at least not very useful in most cases. Thus, and due to the limited effect of using multiple CNNs in a row, we decided that we should stick to designing a single, well-tailored CNN for training a model.
+\textit{[SEQUENTIAL CNNs]}  
+ One first such idea is to use a combination of two or more convolutional neural networks. In our case, we tried using two CNNs one after the other. The second neural net takes as input the predictions made by the model resulting from the first CNN. In this design, the second net mainly acts as some kind of image filter that tries to fix the mistakes made by the first one. It will fill missing gaps in road predictions and remove some unwanted noise.
 
-As mentioned in section \ref{ssec:data_proc}, we divide all of our images (both training and test images) into patches of smaller size. The effect of patch size
-% TODO: evaluate effect of patch size on accuacy OR say that we chose 16x16 because of the evaluation being on 16x16
-Since we cannot compute our model by directly taking whole images as inputs, due to the large number of resulting parameters, we use this image segmentation method in all implementations.
+\textit{[PARALLEL CNNs]}  
+Another idea would be to use two or more convolutional neural networks in parallel, and, for example, merge their results using another (following-up) CNN. In this case, we would need to apply those parallel convolutional neural nets on different inputs. However, as mentioned in section \ref{ssec:data_proc}, using inputs other than the images' RGB values is unnecessary, or at least not very useful in most cases. Thus, we did not develop this idea further.
 
-% TODO: maybe evaluate the effect of hyperparameter tuning (kernel size etc)
+We will now detail more precise design decisions, the ideas behind those designs, and their effect on model performance.
 
-% TODO: CNN design
+\textit{[PATCH SIZE]} 
+As mentioned in section \ref{ssec:data_proc}, we divide all of our images (both training and test images) into patches of smaller size. The choice of patch size depends on the implemented neural net design. If we want to use a large number of batches, we need to reduce the patch size. In our case, most implementations use a patch size of $16 \times 16$ pixels. This coincides with the evaluation criteria. Some of our implementations classify an image pixel by pixel, some classify patch by patch. In general, using patches of side $16$, we found that our model's predictions were better evaluated when predicting patch by patch.
 
-% TODO: borders method
+\textit{[PATCH EXTENSIONS]} 
+Let us consider an implementation using patches of side $16$ pixels, and classifying patch by patch. In this case, we notice that patches containing on object that overlays a road are often ill-classified. To counteract this issue, we would like the classifier to take into account the pixels that surround the patch it is working on. That is, when classifying a patch of side 16, we give the classifier a larger input, i.e. a patch of side $24$. Using this method we can improve our prediction accuracies, as shown in figure \ref{fig:extensions}.
 
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.48\linewidth}
+		\includegraphics[width=\textwidth]{correlation.png}
+		\captionsetup{aboveskip=0.4cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\caption{Accuracies of a simple CNN with patches of side $16$px}
+		\label{fig:noExtensions}
+	\end{minipage}
+	\hspace{0.05cm}
+	\begin{minipage}[b]{0.48\linewidth}
+		\includegraphics[width=\textwidth]{grid_search.png}
+		\captionsetup{aboveskip=0.1cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\caption{Accuracies of a the same CNN with patch extensions ($24$px)}
+		\label{fig:extensions}
+	\end{minipage}
+\end{figure}
+% TODO: comparison -> graph
+
+\textit{[VGG 16 NET]}
+%TODO: our variant of alex net and its results
+
+\textit{[U-NET]}
+%TODO: our u-net variant and its results
+
+
+
+\subsection{Post-Processing} 
+\label{ssec:post}
+
+After observing that many of the predictions made by our designed models contained a fair amount of noise, we decided to use some post-processing to get clearer results. The observed noise mostly consists of single patches wrongly classified as road, lying in between patches correctly classified as background. We also notice some patches surrounded by road-patches that are classified as background.
+
+To subvert this issue, we apply a convolution filter to the resulting prediction. The convolution looks at blocks of patches of size $3 \times 3$, and determines if the central patch should be marked as road or not, depending on the $8$ patches surrounding it. The effect of this filter is shown in figure \ref{fig:post}. On average, this post-processing method improved our prediction accuracy by approximately $XXX\%$.
+%TODO: ^^^ fill
+
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.48\linewidth}
+		\includegraphics[width=\textwidth]{correlation.png}
+		\captionsetup{aboveskip=0.4cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\caption{Prediction without post-processing}
+		\label{fig:noPost}
+	\end{minipage}
+	\hspace{0.05cm}
+	\begin{minipage}[b]{0.48\linewidth}
+		\includegraphics[width=\textwidth]{grid_search.png}
+		\captionsetup{aboveskip=0.1cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\caption{Prediction with post-processing}
+		\label{fig:post}
+	\end{minipage}
+\end{figure}
+% TODO: figure comparison -> original, post processed
 
 \subsection{Model Validation} 
 \label{ssec:model_validation}
 
 To validate our model we first experimented with k-fold cross validation. However, in order to get satisfactory results from the latter method, we would need to train our model multiple times for every implementation we designed. Since for most implementations a single training round can take a few hours, comparing our models using k-fold cross validation is not an option.
 
-% TODO: how do we validate? Division in train test and evaluation sets
+We thus evaluate our models on their validation and test accuracy (accuracies on validation and test sets respectively). The validation and test accuracies are obtained by splitting the data set into 3 parts, the first, major, part is used for training, the second for validating the model and the last is used to obtain the test accuracy. We randomize our data before splitting. The training is run for enough epochs, so as to allow the validation accuracy to be maximized for the implementation we are testing.
 
+\section{Final Design}
+\label{sec:final}
+
+% TODO: list all stuff used for final model + how many epochs for good accuracy
 
 \section{Results}
 \label{sec:results}
+
+% TODO: results -> we will not do direct comparisons because we did not have time to put together various, less good models, that use the same pre and post processing as our final model.
+% TODO: accuracy w.r.t epochs -> GRAPH
+
 
 \begin{table}[h]
 	\begin{tabular}{ |c|c| } 
@@ -133,5 +209,13 @@ To validate our model we first experimented with k-fold cross validation. Howeve
 \section{Conclusion}
 \label{sec:conclusion}
 
+% TODO: reminder of results, what we could add, what we learned, 
+
+
+% TODO: cite and bibliography
+\cite{anderson04}
+
+\bibliographystyle{IEEEtran}
+\bibliography{literature}
 
 \end{document}

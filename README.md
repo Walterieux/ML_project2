@@ -42,6 +42,9 @@ Note that pip (or pip3) is required to install some dependecies.
 
 ## Files
 
+* folder `saved_scripts` contains scripts that contain various methods and the 
+implementations thereof, as mentioned in the report. The comments in the scripts
+themselves detail the script's function.
 * `run.py` contains the creation, training and evaluation of our CNN. 
 It can be run from your anaconda promt, with the correct environment selected.
  
