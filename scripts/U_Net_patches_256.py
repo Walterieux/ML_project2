@@ -86,24 +86,6 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
     Returns the model, accuracy over the test data, loss over the test data
     """
 
-    # shrink data size
-    """
-    indexes = np.arange(len(train_images))
-    np.random.shuffle(indexes)
-    train_images = train_images[indexes[0: int(0.25 * len(indexes))]]
-    train_labels = train_labels[indexes[0: int(0.25 * len(indexes))]]
-    indexes = np.arange(len(test_images))
-    np.random.shuffle(indexes)
-    test_images = test_images[indexes[0: int(0.4 * len(indexes))]]
-    test_labels = test_labels[indexes[0: int(0.4 * len(indexes))]]
-
-    nb_train = np.prod(train_labels.shape)
-    nb_test = np.prod(test_labels.shape)
-    percentage_road = (np.mean(train_labels) * nb_train + np.mean(test_labels) * nb_test) / (
-            nb_train + nb_test)
-    print("percentage road: ", percentage_road)
-    """
-
     # create mini_patches
     patches_train_images = create_patches(train_images, patch_shape)
     patches_validation_images = create_patches(validation_images, patch_shape)
@@ -115,10 +97,6 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
     patches_test_labels = create_patches(test_labels, (patch_shape[0], patch_shape[1]))
     patches_test_labels = patches_test_labels[:, :, :, None]
 
-    print("patches_train_images shape: ", patches_train_images.shape)
-    print("patches_train_labels shape: ", patches_train_labels.shape)
-
-    # https://github.com/ArkaJU/U-Net-Satellite/blob/master/U-Net.ipynb
     def build_model(input_size=(256, 256, 3)):
         inputs = Input(input_size)
 
@@ -220,7 +198,7 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
 
         model = Model(inputs=inputs, outputs=conv10)
 
-        model.compile(optimizer='adamax', loss='binary_crossentropy', metrics=['accuracy'])  # TODO F1-score
+        model.compile(optimizer='adamax', loss='binary_crossentropy', metrics=['accuracy'])
 
         return model
 
@@ -238,77 +216,20 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
     plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
     plt.hlines(test_acc, 0, NUM_EPOCHS, label="accuracy on test set")
     plt.grid(True)
-    plt.title('Training Accuracy vs. Validation Accuracy')
+    plt.title('Accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.show()
     plt.savefig('U_Net_patches_256.png')
+    plt.show()
 
+    # Save predictions on training_test in order to apply post_process
     training_test_predicted_labels = model.predict(patches_test_images)
     unpatched_labels = np.asarray(get_output_from_patches(training_test_predicted_labels, img_shape))
     unpatched_labels = unpatched_labels.reshape((-1, *train_labels[0].shape))
-    print("unpatched_labels shape: ", unpatched_labels.shape)
     save_labels(unpatched_labels, "../data/training_test/data_augmented_predicted_labels/")
 
     return model, test_loss, test_acc
-
-
-def cross_validation_training(images, labels, num_folds):
-    """
-    Train model with cross validation
-
-    Returns the model with the best accuracy over the testing set
-    """
-
-    acc_per_fold = []
-    loss_per_fold = []
-    best_accuracy = 0
-    best_model = None
-
-    kfold = KFold(n_splits=num_folds, shuffle=True)
-    for train_index, test_index in kfold.split(images, labels):
-
-        # Split data
-        train_images = images[train_index]
-        test_images = images[test_index]
-        train_labels = labels[train_index]
-        test_labels = labels[test_index]
-
-        model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
-
-        if test_acc > best_accuracy:
-            best_accuracy = test_acc
-            best_model = model
-
-        acc_per_fold.append(test_acc)
-        loss_per_fold.append(test_loss)
-    print("Mean accuracy = ", np.mean(acc_per_fold), " accuracy variance: ", np.var(acc_per_fold))
-    print("Mean loss = ", np.mean(loss_per_fold), " loss variance: ", np.var(loss_per_fold))
-
-    return best_model
-
-
-def train_test_split_training(images, labels, test_size):
-    """
-    Train the model with a simple split of the data:
-    test_size of data is used for testing and 1 - test_size is used for training
-
-    Returns the model
-    """
-
-    # Split data
-    train_images, test_images, train_labels, test_labels = train_test_split(images,
-                                                                            labels,
-                                                                            test_size=test_size,
-                                                                            shuffle=True)
-
-    model, test_loss, test_acc = train_model(train_images, test_images, train_labels, test_labels)
-
-    print("Accuracy = ", test_acc)
-    print("Loss = ", test_loss)
-
-    return model
 
 
 def main():
@@ -322,8 +243,6 @@ def main():
     training_test_data_path = data_dir + 'training_test/data_augmented'
     training_test__labels_path = data_dir + 'training_test/data_augmented_groundtruth'
 
-    # train_images, mean, std = center(extract_images(training_training_data_path))
-    # test_images, _, _ = center(extract_images(training_test_data_path), mean, std, still_to_center=False)
     train_images = extract_images(training_training_data_path)
     validation_images = extract_images(training_validation_data_path)
     test_images = extract_images(training_test_data_path)
@@ -331,17 +250,15 @@ def main():
     validation_labels = extract_labels(training_validation_labels_path)
     test_labels = extract_labels(training_test__labels_path)
 
-    # model = train_test_split_training(images, labels, 0.9)
     model, test_loss, test_acc = train_model(train_images, validation_images, test_images, train_labels,
                                              validation_labels, test_labels)
     # model.save("saved_model")
 
+    # predict groundtruth for AiCrowd images
     submission_images = extract_test_images()
     submission_images_patches = create_patches(submission_images, patch_shape)
-
     test_test_predicted_labels = model.predict(submission_images_patches)
     unpatched_labels = np.asarray(get_output_from_patches(test_test_predicted_labels, test_img_shape))
-    print("unpatched_labels shape: ", unpatched_labels.shape)
     unpatched_labels = unpatched_labels.reshape((-1, *test_img_shape, 1))
 
     save_labels(unpatched_labels, "../data/test_set_labels/")
