@@ -100,7 +100,7 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 	\centering
 	\begin{minipage}[b]{0.48\linewidth}
 		\includegraphics[width=\textwidth]{CNN_with_border_0.png}
-		\captionsetup{aboveskip=0.4cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\captionsetup{aboveskip=0.35cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
 		\caption{Accuracies of a simple CNN with patches of side $16$px}
 		\label{fig:noExtensions}
 	\end{minipage}
@@ -129,20 +129,19 @@ To subvert this issue, we apply a convolution filter to the resulting prediction
 \begin{figure}[h]
 	\centering
 	\begin{minipage}[b]{0.48\linewidth}
-		\includegraphics[width=\textwidth]{correlation.png}
-		\captionsetup{aboveskip=0.4cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\includegraphics[width=\textwidth]{comparison_1.png}
+		\captionsetup{aboveskip=0.2cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
 		\caption{Prediction without post-processing}
 		\label{fig:noPost}
 	\end{minipage}
 	\hspace{0.05cm}
 	\begin{minipage}[b]{0.48\linewidth}
-		\includegraphics[width=\textwidth]{grid_search.png}
-		\captionsetup{aboveskip=0.1cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\includegraphics[width=\textwidth]{comparison_2.png}
+		\captionsetup{aboveskip=0.2cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
 		\caption{Prediction with post-processing}
 		\label{fig:post}
 	\end{minipage}
 \end{figure}
-% TODO: figure comparison -> original, post processed
 
 \subsection{Model Validation} 
 \label{ssec:model_validation}
@@ -177,21 +176,10 @@ Figure \ref{fig:final} shows the training evolution of our model. The locally ac
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=\columnwidth]{U_Net_patches_256.png}
-	\captionsetup{justification=centering, margin=0.1cm}
+	\captionsetup{justification=centering, margin=0.2cm}
 	\caption{Accuracies of our final model w.r.t. the number of epochs the model was run for.}
 	\vspace{-6mm}
 	\label{fig:final}
-\end{figure}
-
-
-% TODO : insert figure
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=\columnwidth]{U_Net_patches_256.png}
-	\captionsetup{justification=centering, margin=0.1cm}
-	\caption{An training image overlayed with the predictions made by our model, in red (road prediction).}
-	\vspace{-6mm}
-	\label{fig:comp}
 \end{figure}
 
 \bigskip
@@ -202,7 +190,14 @@ Figure \ref{fig:final} shows the training evolution of our model. The locally ac
 
 Our final model achieves a test accuracy of $94.3\%$ and an F1 score of $89.4\%$. Due to time restrictions we were unfortunately unable to enhance our final model any further than we did. In fact, we experimented with many different models and CNN designs throughout the project's development. Sadly, we only found out about the U-Net-like model quite late in the development process. We would have liked to play further with our final model. Undoubtedly we could have improved its performance, using for example the methods mentioned in section \ref{sec:methods}.
 
-
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\columnwidth]{prediction.jpeg}
+	\captionsetup{justification=centering, margin=0.2cm}
+	\caption{A training image overlayed with the predictions made by our model, in red (road prediction).}
+	\vspace{-4mm}
+	\label{fig:comp}
+\end{figure}
 
 \bibliographystyle{IEEEtran}
 \bibliography{literature}
