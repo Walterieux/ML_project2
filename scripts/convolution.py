@@ -326,6 +326,7 @@ def get_output_from_cnn_batch(batches_4, input_output):
     --------------output ---------------------------------------------
     return groundtruth image
     """
+
     nb_elem_image = 330
     input_output = 400
     output_image = np.zeros((input_output, input_output))
@@ -338,15 +339,21 @@ def get_output_from_cnn_batch(batches_4, input_output):
 
     output_image[-nb_elem_image:, -nb_elem_image:] = resize(batches_4[3, :, :], (nb_elem_image, nb_elem_image))
 
-    output_image[0:-nb_elem_image, -nb_elem_image: nb_elem_image] = output_image[0:-nb_elem_image,-nb_elem_image: nb_elem_image] / 2
+    output_image[0:-nb_elem_image, -nb_elem_image: nb_elem_image] = output_image[0:-nb_elem_image,
+                                                                    -nb_elem_image: nb_elem_image] / 2
 
-    output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image] = output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image] / 2
+    output_image[-nb_elem_image:nb_elem_image, 0:-nb_elem_image] = output_image[-nb_elem_image:nb_elem_image,
+                                                                   0:-nb_elem_image] / 2
 
-    output_image[-nb_elem_image:nb_elem_image, -nb_elem_image:nb_elem_image] = output_image[-nb_elem_image:nb_elem_image, -nb_elem_image:nb_elem_image] / 4
+    output_image[-nb_elem_image:nb_elem_image, -nb_elem_image:nb_elem_image] = output_image[
+                                                                               -nb_elem_image:nb_elem_image,
+                                                                               -nb_elem_image:nb_elem_image] / 4
 
-    output_image[-nb_elem_image:nb_elem_image, nb_elem_image:] = output_image[-nb_elem_image:nb_elem_image, nb_elem_image:] / 2
+    output_image[-nb_elem_image:nb_elem_image, nb_elem_image:] = output_image[-nb_elem_image:nb_elem_image,
+                                                                 nb_elem_image:] / 2
 
-    output_image[nb_elem_image:, -nb_elem_image:nb_elem_image] = output_image[nb_elem_image:, -nb_elem_image:nb_elem_image] / 2
+    output_image[nb_elem_image:, -nb_elem_image:nb_elem_image] = output_image[nb_elem_image:,
+                                                                 -nb_elem_image:nb_elem_image] / 2
 
     return output_image
 
