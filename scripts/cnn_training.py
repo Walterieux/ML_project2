@@ -14,16 +14,18 @@ from tensorflow.python.keras.layers import Dropout
 import create_submission_groundtruth
 from use_borders_mathieu import create_patches_with_border
 
+"""
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
 tf.compat.v1.keras.backend.set_session(session)
+"""
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
-border_size = 16
+border_size = 0
 img_patch_with_border_size = img_patch_size + (2 * border_size)
 img_shape = (400, 400)
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 
 def extract_images(image_path):
@@ -127,6 +129,17 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
     Returns the model, accuracy over the test data, loss over the test data
     """
 
+    # shrink data size
+    indexes = np.arange(len(train_images))
+    np.random.shuffle(indexes)
+    train_images = train_images[indexes[0: int(0.30 * len(indexes))]]
+    train_labels = train_labels[indexes[0: int(0.30 * len(indexes))]]
+    indexes = np.arange(len(validation_images))
+    np.random.shuffle(indexes)
+    validation_images = validation_images[indexes[0: int(0.5 * len(indexes))]]
+    validation_labels = validation_labels[indexes[0: int(0.5 * len(indexes))]]
+
+
     # create mini_patches
     patches_train_labels = create_patches(train_labels, (img_patch_size, img_patch_size))
     patches_validation_labels = create_patches(validation_labels, (img_patch_size, img_patch_size))
@@ -219,7 +232,7 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=128,
+                        batch_size=32,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_validation_images, patches_validation_labels))
 
@@ -265,7 +278,7 @@ def main():
 
     model, test_loss, test_acc = train_model(train_images, validation_images, test_images, train_labels,
                                              validation_labels, test_labels)
-    # model.save("saved_model")
+    model.save("saved_model")
 
     end = time.time()
     print("Computation time: ", end - start)
