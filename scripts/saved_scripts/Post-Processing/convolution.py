@@ -244,13 +244,9 @@ def apply_patches_for_array_of_images(image_list, rgb_binary=True):
         print("shape of list of batches : ", np.shape(list_of_batches))
     for number, image in enumerate(image_list):
         if rgb_binary == False:
-            list_of_batches[number * nb_patch_per_image: (number + 1) * nb_patch_per_image, :,
-            :] = create_patches_from_training_or_test(image, rgb_binary=False, )
+            list_of_batches[number * nb_patch_per_image: (number + 1) * nb_patch_per_image, :, :] = create_patches_from_training_or_test(image, rgb_binary=False, )
         else:
-
-            list_of_batches[number * nb_patch_per_image: (number + 1) * nb_patch_per_image, :,
-            :] = create_patches_from_training_or_test(image)
-    print(np.shape(list_of_batches))
+            list_of_batches[number * nb_patch_per_image: (number + 1) * nb_patch_per_image, :, :] = create_patches_from_training_or_test(image)
 
     return list_of_batches
 
@@ -333,9 +329,6 @@ def get_output_from_cnn_batch(batches_4, input_output):
 
     output_image[-nb_elem_image:, -nb_elem_image:] = resize(batches_4[3, :, :], (nb_elem_image, nb_elem_image))
 
-    # begin to be more though but here we try to recalculate the initial image, we haveto divide by 2, 3 or 4 to some place
-    # take a pencil to understand
-    # small notes only for pr
     # 2
     output_image[0:-nb_elem_image:, -nb_elem_image: nb_elem_image] = output_image[0:-nb_elem_image,
                                                                      -nb_elem_image: nb_elem_image] / 2
@@ -356,7 +349,7 @@ def get_output_from_cnn_batch(batches_4, input_output):
 
 data_dir = '../data/'
 test_dir = data_dir + 'test_set_labels/'
-images = extract_images(test_dir)
+#images = extract_images(test_dir)
 correct_labels = data_dir + 'correct_labels/'
 original_img = data_dir + 'test_set_images/'
 filename_comparaison = data_dir + 'comparaisons/'
@@ -364,12 +357,12 @@ train_augmented = data_dir + 'training/data_augmented/'
 groundtruth = data_dir + 'training/groundtruth/'
 
 # original_images = extract_images_test(original_img, 50)
-list_augmented = extract_images(groundtruth, divide_by255=False)
+# list_augmented = extract_images(groundtruth, divide_by255=False)
 # list_augmented = extract_images(train_augmented, divide_by255=True)
 
-list_batches = apply_patches_for_array_of_images(list_augmented, rgb_binary=False)
+# list_batches = apply_patches_for_array_of_images(list_augmented, rgb_binary=False)
 
-print("list_batches shape :", np.shape(list_batches))
+# print("list_batches shape :", np.shape(list_batches))
 # get_output_from_cnn_batch(list_batches[:,:,0:4], 400 )
 
 

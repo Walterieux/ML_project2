@@ -4,7 +4,10 @@ import numpy as np
 
 import cnn_training
 
+from use_borders_mathieu import create_patches_with_border
+
 img_patch_size = 16
+border_size = 16
 img_shape = (608, 608)
 
 
@@ -17,7 +20,7 @@ def extract_test_images():
     for i in range(1, 51):
         img_path = '../data/test_set_images/test_' + str(i) + '/test_' + str(i) + '.png'
         img = imageio.imread(img_path)
-        img = img / 255.0
+        img = cnn_training.normalize_image(img)
         imgs.append(img.astype('float32'))
 
     return np.asarray(imgs)
@@ -57,7 +60,8 @@ def main():
     """
 
     test_images = extract_test_images()
-    patches_images = cnn_training.create_patches(test_images, (img_patch_size, img_patch_size, 3))
+    patches_images = create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size,
+                                                     "TEST IMAGES")
 
     model = keras.models.load_model("saved_model")
 

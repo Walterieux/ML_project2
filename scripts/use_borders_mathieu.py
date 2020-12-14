@@ -26,7 +26,7 @@ tf.compat.v1.keras.backend.set_session(session)
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 border_size = 4
-img_patch_with_border_size = img_patch_size + (2*border_size)
+img_patch_with_border_size = img_patch_size + (2 * border_size)
 img_shape = (400, 400)
 NUM_EPOCHS = 30
 
@@ -83,23 +83,25 @@ def add_border_3d(image, border):
     """
     Adds a black border of size border to a given image
     """
-    out = np.zeros((image.shape[0] + (border*2), image.shape[1] + (border*2), 3), dtype=image.dtype)
+    """out = np.zeros((image.shape[0] + (border*2), image.shape[1] + (border*2), 3), dtype=image.dtype)
     for x in range(image.shape[0] + (border*2)):
         for y in range(image.shape[1] + (border*2)):
             if x < border or x >= border + image.shape[0] or y < border or y >= border + image.shape[1]:
                 out[x][y] = [0.0, 0.0, 0.0]
             else:
                 out[x][y] = image[x - border][y - border]
-    return out
+    return out"""
+
+    return np.pad(image, ((border, border), (border, border), (0, 0)), 'symmetric')
 
 
 def add_border_2d(image, border):
     """
     Adds a black border of size border to a given image
     """
-    out = np.zeros((image.shape[0] + (border*2), image.shape[1] + (border*2)), dtype=image.dtype)
-    for x in range(image.shape[0] + (border*2)):
-        for y in range(image.shape[1] + (border*2)):
+    out = np.zeros((image.shape[0] + (border * 2), image.shape[1] + (border * 2)), dtype=image.dtype)
+    for x in range(image.shape[0] + (border * 2)):
+        for y in range(image.shape[1] + (border * 2)):
             if x < border or x >= border + image.shape[0] or y < border or y >= border + image.shape[1]:
                 out[x][y] = 0.0
             else:
