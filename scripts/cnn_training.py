@@ -251,8 +251,7 @@ def train_model(train_images, test_images, train_labels, test_labels):
 
     model.compile(optimizer='adamax',
                   loss='binary_crossentropy',
-                  # metrics=[tf.keras.metrics.BinaryAccuracy(threshold=percentage_road)])
-                  metrics=[tfa.metrics.F1Score(num_classes=1, threshold=0.5)])
+                  metrics=['accuracy'])
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
@@ -260,16 +259,15 @@ def train_model(train_images, test_images, train_labels, test_labels):
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_test_images, patches_test_labels))
     #TODO check history labels
-    """
-    plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
-    plt.plot(history.history['val_binary_accuracy'], 'r', label="accuracy on validation set")
+
+    plt.plot(history.history['accuracy'], 'g', label="accuracy on train set")
+    plt.plot(history.history['val_accuracy'], 'r', label="accuracy on validation set")
     plt.grid(True)
     plt.title('Training Accuracy vs. Validation Accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
     plt.show()
-    """
 
     training_test_predicted_labels = model.predict(patches_test_images)
     unpatched_labels = create_submission_groundtruth.unpatch_labels(training_test_predicted_labels,
