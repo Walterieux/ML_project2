@@ -50,22 +50,7 @@ In section \ref{ssec:data_proc} we describe how the data set is enlarged and how
 \section{Models and Methods}
 \label{sec:methods}
 
-\begin{figure}[h]
-	\centering
-	\begin{minipage}[b]{0.48\linewidth}
-		\includegraphics[width=\textwidth]{correlation.png}
-		\captionsetup{aboveskip=0.4cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
-		\caption{Correlation matrix of all features}
-		\label{fig:correlation}
-	\end{minipage}
-	\hspace{0.05cm}
-	\begin{minipage}[b]{0.48\linewidth}
-		\includegraphics[width=\textwidth]{grid_search.png}
-		\captionsetup{aboveskip=0.1cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
-		\caption{Accuracies obtained for different polynomial extension degrees and $\lambda$ values}
-		\label{fig:grid_search}
-	\end{minipage}
-\end{figure}
+In the following we will go over a range of different implemented pre-processing methods, neural net designs, and post-processing methods. We will detail which methods proved useful and in which context.
 
 \subsection{Data Pre-Processing} 
 \label{ssec:data_proc}
@@ -86,20 +71,14 @@ We explored further ways of increasing the amount of input data we can feed to o
 \textit{[DISTANCE]}   
 One additional information we extract and feed to our CNN, is what we like to call the \textit{distance} of an image. This  \textit{distance} is the norm of the vector we obtain as a result of subtracting from every pixel's RGB value a value we call the \textit{mean road RGB color}. We compute the \textit{mean road RGB color} by averaging all RGB colors that are known to represent a piece of road, i.e. all pixels of our training set that we know to be part of a road (by looking at the ground-truth images). The \textit{distance} of an image can thus be represented as another image, of identical dimensions. It is an image that represents, at every pixel, how closely the color of the latter resembles the known color of a road. The resulting image can be fed to our CNN as additional data.
 
-\textit{[STANDARDIZATION]}   
-Finally, we also perform standardization of our data. 
-%TODO: add standardization
-
-
 However, both methods \textit{EDGES} and \textit{DISTANCE} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good neural net will automatically learn those features. The method \textit{PATCHES} is not just useful, it is necessary. In fact, to limit parameter count, it is good to work on smaller inputs (and outputs). We will detail in later sections the patch sizes used for various designs. \textit{TRANSFORMATIONS} proved extremely useful as well.
-%TODO: standardization?
 
 
 
 \subsection{Evolution of Our Neural Network} 
 \label{ssec:technique}
 
-In the following we will discuss several CNN designs we experimented with, both successful and unsuccessful. For will name every design / method, so that we can reference them later on.
+Let us now look at several CNN designs we experimented with, both successful and unsuccessful. We will name every design / method, so that we can reference them later on.
 
 Before we dive into the detailed neural net designs we developed, let us list a few general ideas we experimented with.
 
@@ -120,27 +99,24 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 \begin{figure}[h]
 	\centering
 	\begin{minipage}[b]{0.48\linewidth}
-		\includegraphics[width=\textwidth]{correlation.png}
+		\includegraphics[width=\textwidth]{CNN_with_border_0.png}
 		\captionsetup{aboveskip=0.4cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
 		\caption{Accuracies of a simple CNN with patches of side $16$px}
 		\label{fig:noExtensions}
 	\end{minipage}
 	\hspace{0.05cm}
 	\begin{minipage}[b]{0.48\linewidth}
-		\includegraphics[width=\textwidth]{grid_search.png}
+		\includegraphics[width=\textwidth]{CNN_with_border_16.png}
 		\captionsetup{aboveskip=0.1cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
-		\caption{Accuracies of a the same CNN with patch extensions ($24$px)}
+		\caption{Accuracies of a the same CNN with patch extensions ($32$px total patch size)}
 		\label{fig:extensions}
 	\end{minipage}
 \end{figure}
-% TODO: comparison -> graph
 
-\textit{[VGG 16 NET]}
-%TODO: our variant of alex net and its results
+\textit{[VGG-16 NET]}
+One CNN design we implemented and used is inspired by a design known as VGG-16 \cite{vgg}. This neural net essentially consists of 2 or 3 convolution layer, followed by several max-pooling layers, and ends with two fully connected layers. Our model takes a patch of size $16 \times 16$ as an input, and outputs a single value, between $0$ and $1$. We then apply a threshold on that output to characterize the patch as road or background.
 
-\textit{[U-NET]}
-%TODO: our u-net variant and its results
-
+Unfortunately, the main issue of this design is that it is difficult for the model to determine the patch's classification due to the latter's small size. In order to get appreciably good results using this design we would need to apply a quite large patch extension, which uses more memory than we had available on our machines.
 
 
 \subsection{Post-Processing} 
@@ -148,8 +124,7 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 
 After observing that many of the predictions made by our designed models contained a fair amount of noise, we decided to use some post-processing to get clearer results. The observed noise mostly consists of single patches wrongly classified as road, lying in between patches correctly classified as background. We also notice some patches surrounded by road-patches that are classified as background.
 
-To subvert this issue, we apply a convolution filter to the resulting prediction. The convolution looks at blocks of patches of size $3 \times 3$, and determines if the central patch should be marked as road or not, depending on the $8$ patches surrounding it. The effect of this filter is shown in figure \ref{fig:post}. On average, this post-processing method improved our prediction accuracy by approximately $XXX\%$.
-%TODO: ^^^ fill
+To subvert this issue, we apply a convolution filter to the resulting prediction. The convolution looks at blocks of patches of size $3 \times 3$, and determines if the central patch should be marked as road or not, depending on the $8$ patches surrounding it. The effect of this filter is shown in figure \ref{fig:post}.
 
 \begin{figure}[h]
 	\centering
@@ -179,41 +154,55 @@ We thus evaluate our models on their validation and test accuracy (accuracies on
 \section{Final Design}
 \label{sec:final}
 
-% TODO: list all stuff used for final model + how many epochs for good accuracy
+Although combinations of the techniques mentioned in section \ref{sec:methods} did give us some good results, with test accuracies reaching about $89\%$, our final model, which achieved the best results, uses none of those techniques.
+
+Our final design is based on a variant of a U-Net model by Peter Hönigschmid \cite{unet}. Our model takes as input an image patch of dimensions ($256$, $256$, $3$). It outputs a prediction for every pixel, i.e. the output has the shape ($256$, $256$). Every entry of the output is a single value, between $0$ and $1$. We apply a threshold on that output to characterize every pixel as road or background. Since the model contains many layers and parameters, we will not detail it here. A complete representation of the model can be seen in \texttt{model\_plot.png}. 
+
+We augmented the basis of Peter Hönigschmid \cite{unet} using ideas from a paper by Shaofeng Cai, Yao Shu, Wei Wang, Gang Chen,Member, and Beng Chin Ooi \cite{final}. The extracted and applied techniques consist in the following.
+
+After each convolution in our initial U-Net model, we perform a batch normalization, followed by a Relu activation function and two dimensional spatial dropout, in that order. Let us detail the batch normalization and spatial dropout.
+
+Batch normalization (BN) is an useful technique for normalizing the inputs of a layer. As stated by Jason Brownlee \cite{bn}, it reduces the number of epochs required to train the model correctly. Furthermore, it is adequate to use BN since we use a small batch size in our model, due to memory restrictions.
+
+Two dimensional spatial dropout (\textit{SpatialDropout2D} in Keras Tensorflow) consists of dropping random channels. In our case, we prefer the latter layer to a classical \textit{Dropout} layer, since a \textit{Dropout} layer drops random individual pixels. In our case, neighboring pixels are often highly correlated, which corresponds to the official Keras documentation's \cite{keras} use case. A well detailed StackExchange topic \cite{stack} motivates this decision further. The spatial dropout percentage we use is $15\%$.
+
 
 \section{Results}
 \label{sec:results}
 
-% TODO: results -> we will not do direct comparisons because we did not have time to put together various, less good models, that use the same pre and post processing as our final model.
-% TODO: accuracy w.r.t epochs -> GRAPH
+Let us now expose the results obtained using our final model. We trained our model using the Collab infrastructure provided by Google. The training was done on an NVidia Tesla V100-SXM2-16GB GPU and required 12GB of memory. The running time to obtain the following results was about 5 hours.
+
+Figure \ref{fig:final} shows the training evolution of our model. The locally achieved test accuracy is of $92.7\%$. In the AiCrowd competition, we attained an accuracy of $94.3\%$ and a corresponding F1 score of $89.4\%$. Figure \ref{fig:comp} shows a test images with the corresponding predictions, made by our model, highlighted in reed.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\columnwidth]{U_Net_patches_256.png}
+	\captionsetup{justification=centering, margin=0.1cm}
+	\caption{Accuracies of our final model w.r.t. the number of epochs the model was run for.}
+	\vspace{-6mm}
+	\label{fig:final}
+\end{figure}
 
 
-\begin{table}[h]
-	\begin{tabular}{ |c|c| } 
-		\hline
-		\textbf{Regression Technique} & \textbf{Accuracy (Avg.) - STD}  \\
-		\hline
-		Least Squares GD (and SGD) & $68.5\%$ - $0.20\%$ \\ 
-		Least Squares & $74.4\%$ - $0.25\%$ \\ 
-		Ridge Regression & $74.4\%$ - $0.24\%$ \\ 
-		Logistic Regression & $65.7\%$ - $0.29\%$ \\ 
-		Newton Logistic Regression & $65.7\%$ - $0.29\%$ \\ 
-		Our Best Regression & $81.3\%$ - $0.82\%$ \\ 
-		\hline
-	\end{tabular}
-	\captionsetup{aboveskip=0.3cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
-	\caption{Accuracy of Various Models Obtained by Our Regressions}
-	\label{tab:model_accuracy}
-\end{table}
+% TODO : insert figure
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\columnwidth]{U_Net_patches_256.png}
+	\captionsetup{justification=centering, margin=0.1cm}
+	\caption{An training image overlayed with the predictions made by our model, in red (road prediction).}
+	\vspace{-6mm}
+	\label{fig:comp}
+\end{figure}
+
+\bigskip
+\bigskip
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-% TODO: reminder of results, what we could add, what we learned, 
+Our final model achieves a test accuracy of $94.3\%$ and an F1 score of $89.4\%$. Due to time restrictions we were unfortunately unable to enhance our final model any further than we did. In fact, we experimented with many different models and CNN designs throughout the project's development. Sadly, we only found out about the U-Net-like model quite late in the development process. We would have liked to play further with our final model. Undoubtedly we could have improved its performance, using for example the methods mentioned in section \ref{sec:methods}.
 
 
-% TODO: cite and bibliography
-\cite{anderson04}
 
 \bibliographystyle{IEEEtran}
 \bibliography{literature}
