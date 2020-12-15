@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  15 DEC 2020 11:39
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  15 DEC 2020 17:21
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -387,11 +387,7 @@ File: U_Net_patches_256.png Graphic file (type png)
 <use U_Net_patches_256.png>
 Package pdftex.def Info: U_Net_patches_256.png  used on input line 184.
 (pdftex.def)             Requested size: 243.91125pt x 162.60709pt.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[3 <./comparison_1.png (PNG copy)> <./comparison_2.png (PNG copy)>]
+ [3 <./comparison_1.png (PNG copy)> <./comparison_2.png (PNG copy)>]
 <prediction.jpeg, id=105, 610.28pt x 610.28pt>
 File: prediction.jpeg Graphic file (type jpg)
 <use prediction.jpeg>
@@ -440,7 +436,7 @@ Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 213.
 Here is how much of TeX's memory you used:
  7078 strings out of 480994
  114934 string characters out of 5916032
- 377337 words of memory out of 5000000
+ 378337 words of memory out of 5000000
  22462 multiletter control sequences out of 15000+600000
  568853 words of font info for 87 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -455,7 +451,7 @@ live/2019/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2019/texmf-di
 st/fonts/type1/urw/times/utmbi8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/ur
 w/times/utmr8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmri8a.pf
 b>
-Output written on report.pdf (4 pages, 348096 bytes).
+Output written on report.pdf (4 pages, 348243 bytes).
 PDF statistics:
  164 PDF objects out of 1000 (max. 8388607)
  137 compressed objects within 2 object streams

@@ -71,7 +71,7 @@ We explored further ways of increasing the amount of input data we can feed to o
 \textit{[DISTANCE]}   
 One additional information we extract and feed to our CNN, is what we like to call the \textit{distance} of an image. This  \textit{distance} is the norm of the vector we obtain as a result of subtracting from every pixel's RGB value a value we call the \textit{mean road RGB color}. We compute the \textit{mean road RGB color} by averaging all RGB colors that are known to represent a piece of road, i.e. all pixels of our training set that we know to be part of a road (by looking at the ground-truth images). The \textit{distance} of an image can thus be represented as another image, of identical dimensions. It is an image that represents, at every pixel, how closely the color of the latter resembles the known color of a road. The resulting image can be fed to our CNN as additional data.
 
-However, both methods \textit{EDGES} and \textit{DISTANCE} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good neural net will automatically learn those features. The method \textit{PATCHES} is not just useful, it is necessary. In fact, to limit parameter count, it is good to work on smaller inputs (and outputs). We will detail in later sections the patch sizes used for various designs. \textit{TRANSFORMATIONS} proved extremely useful as well.
+However, both methods \textit{EDGES} and \textit{DISTANCE} did not prove useful. In fact, it is not necessary to manually extract features such as those when we train a model using a CNN. A good neural net will automatically learn useful features. The method \textit{PATCHES} is not just useful, it is necessary. In fact, to limit parameter count, it is good to work on smaller inputs (and outputs). We will detail in later sections the patch sizes used for various designs. \textit{TRANSFORMATIONS} proved extremely useful as well.
 
 
 
@@ -113,8 +113,8 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 	\end{minipage}
 \end{figure}
 
-\textit{[VGG-16 NET]}
-One CNN design we implemented and used is inspired by a design known as VGG-16 \cite{vgg}. This neural net essentially consists of 2 or 3 repetitions of a succession of a convolution layer and a max-pooling layer, and ends with two fully connected layers. The convolution layers (Conv2D in Keras) have a kernel size of ($3$, $3$) with a stride of ($1$, $1$). Our model takes a patch of size $16 \times 16$ as an input, and outputs a single value, between $0$ and $1$. We then apply a threshold on that output to characterize the patch as road or background.
+\textit{[VGG-16-LIKE]}
+One CNN design we implemented and used is inspired by a design known as VGG-16 \cite{vgg}. This neural net essentially consists of 3 repetitions of a succession of multiple convolution layers and a max-pooling layer, and ends with two fully connected layers. The convolution layers (Conv2D in Keras) have a kernel size of ($3$, $3$) with a stride of ($1$, $1$). Our model takes a patch of size $16 \times 16$ as an input, and outputs a single value, between $0$ and $1$. We then apply a threshold on that output to characterize the patch as road or background.
 
 Unfortunately, the main issue of this design is that it is difficult for the model to determine the patch's classification due to the latter's small size. In order to get appreciably good results using this design we would need to apply a quite large patch extension, which uses more memory than we had available on our machines.
 
@@ -154,7 +154,7 @@ We thus evaluate our models on their validation and test accuracy (accuracies on
 	\item Validation set : $10\%$ of the data set
 	\item Testing set : $10\%$ of the data set
 \end{itemize}
-We randomize our data before splitting. The training is run for enough epochs, so as to allow the validation accuracy to be maximized for the implementation we are testing.
+We randomize our data before splitting. The training is run for enough epochs, so as to allow the validation accuracy to be maximized for the implementation we are testing. The validation set is used to avoid over-fitting during the training phase. The test set on the other hand is used to evaluate our model's performance (accuracy).
 
 \section{Final Design}
 \label{sec:final}
@@ -195,7 +195,7 @@ Figure \ref{fig:final} shows the training evolution of our model. The locally ac
 \label{sec:conclusion}
 
 % TODO : fill xxx
-Our final model improves in accuracy by about $XXX\%$ compared to our a baseline model. Due to time restrictions we were unfortunately unable to enhance our final model any further than we did. In fact, we experimented with many different models and CNN designs throughout the project's development. Sadly, we only found out about the U-Net-like model quite late in the development process. We would have liked to play further with our final model. Undoubtedly we could have improved its performance, using for example the methods mentioned in section \ref{sec:methods}. 
+Our final model improves in accuracy by about $XXX\%$ compared to our a baseline model (VGG-16-like). Due to time restrictions we were unfortunately unable to enhance our final model any further than we did. In fact, we experimented with many different models and CNN designs throughout the project's development. Sadly, we only found out about the U-Net-like model quite late in the development process. We would have liked to play further with our final model. Undoubtedly we could have improved its performance, using for example the methods mentioned in section \ref{sec:methods}. 
 % TODO : what we learned?
 
 \begin{figure}[h]
