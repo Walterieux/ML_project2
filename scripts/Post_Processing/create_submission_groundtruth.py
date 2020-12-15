@@ -16,7 +16,7 @@ def extract_test_images():
 
     imgs = []
     for i in range(1, 51):
-        img_path = '../data/test_set_images/test_' + str(i) + '/test_' + str(i) + '.png'
+        img_path = '../../data/test_set_images/test_' + str(i) + '/test_' + str(i) + '.png'
         img = imageio.imread(img_path)
         img = img / 255
         imgs.append(img.astype('float32'))

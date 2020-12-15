@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Dec 12 10:22:08 2020
 
-@author: jeang
-"""
-from convolution import extract_images
 from patchify import patchify, unpatchify
 import numpy as np
 
@@ -42,6 +37,7 @@ def get_output_from_patches(patches_list, output_shape):
         of which kind of image you create
     ------------------------output ----------------------------------
     return initial image """
+
     if output_shape[0] == training_size:
         nb_matrix_by_row = 2
     else:
@@ -64,6 +60,7 @@ def get_output_from_patches_with_mean(patches_list, output_shape):
         of which kind of image you create
     ------------------------output ----------------------------------
     return initial image """
+
     if output_shape[0] == training_size:
         nb_matrix_by_row = 2
         step_length = (training_size - img_patch_size)
@@ -72,8 +69,6 @@ def get_output_from_patches_with_mean(patches_list, output_shape):
         nb_matrix_by_row = 3
         step_length = (test_size - img_patch_size) // 2
 
-    reconstructed_images = np.zeros(output_shape)
-    nb_elem_images = np.zeros(output_shape)
     nb_elem_by_patch = nb_matrix_by_row ** 2
     images = []
     for number in range(patches_list.shape[0] // nb_elem_by_patch):
@@ -90,13 +85,3 @@ def get_output_from_patches_with_mean(patches_list, output_shape):
         images.extend([reconstructed_images])
 
     return images
-
-
-data_dir = '../../data/'
-test_dir = data_dir + 'test_set_labels/'
-images = extract_images(test_dir)
-correct_labels = data_dir + 'correct_labels/'
-original_img = data_dir + 'test_set_images/'
-filename_comparaison = data_dir + 'comparaisons/'
-train_augmented = data_dir + 'training/data_augmented/'
-groundtruth = data_dir + 'training/groundtruth/'

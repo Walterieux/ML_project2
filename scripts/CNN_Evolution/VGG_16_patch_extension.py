@@ -288,7 +288,9 @@ def main():
     validation_labels = extract_labels(training_validation_labels_path)
     test_labels = extract_labels(training_test__labels_path)
 
-    train_model(train_images, validation_images, test_images, train_labels, validation_labels, test_labels)
+    model, test_loss, test_acc = train_model(train_images, validation_images, test_images, train_labels, validation_labels, test_labels)
+
+    model.save("../saved_model")
 
     end = time.time()
     print("Computation time: ", end - start)

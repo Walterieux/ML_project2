@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 17 18:09:52 2020
-
-@author: jeang
-"""
 import csv
 
 import numpy as np
@@ -170,7 +165,7 @@ def get_mean_gray_value(images_data, images_groundtruth):
 def distance_image(filename, images_data, mean_value_gray):
     """ input:  @filename: plae where the distances images will be stored
                 @images_data  list of images
-                @mean_value_gray: mean value of road in our trainingset
+                @mean_value_gray: mean value of road in our training set
         calculate: the distance image with mean value of road"""
 
     for j, image in enumerate(images_data):
@@ -205,13 +200,6 @@ def save_img(filename, image, number, PIL=False):
             imageio.imwrite(image_filename, (image * 255).astype(np.uint8))
         else:
             imageio.imwrite(image_filename, image.astype(np.uint8))
-
-
-def write_mean_std_csv(filename, mean, std):
-    with open(filename, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(mean)
-        writer.writerow(std)
 
 
 data_dir = '../../data/'

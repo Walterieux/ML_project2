@@ -51,11 +51,13 @@ from tensorflow.python.keras.layers import Dense, Dropout, Flatten, Reshape, Con
 ======================================================
 """
 
-
+"""
+# Use this if GPU error during launch
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
 config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
 tf.compat.v1.keras.backend.set_session(session)
+"""
 
 
 """
@@ -69,7 +71,7 @@ img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
 img_shape = (400, 400)
 NUM_EPOCHS = 50
 # Which fraction of all available training data to take:
-DATA_PORTION = 0.5
+DATA_PORTION = 1
 
 
 """
