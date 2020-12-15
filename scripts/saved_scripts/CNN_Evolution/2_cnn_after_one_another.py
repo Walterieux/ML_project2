@@ -320,7 +320,7 @@ def train_test_split_training(images, labels, test_size):
 def main():
     start = time.time()
 
-    data_dir = '../../data/'
+    data_dir = '../../../data/'
     train_data_filename = data_dir + 'training/data_augmented/'
     train_labels_filename = data_dir + 'training/data_augmented_groundtruth/'
 

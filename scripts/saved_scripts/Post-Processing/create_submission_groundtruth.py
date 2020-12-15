@@ -63,11 +63,11 @@ def main():
     patches_images = create_patches_with_border(test_images, (img_patch_size, img_patch_size, 3), border_size,
                                                      "TEST IMAGES")
 
-    model = keras.models.load_model("saved_model")
+    model = keras.models.load_model("../../saved_model")
 
     predictions = model.predict(patches_images)
     predicted_labels = unpatch_labels(predictions, 50, img_shape)
-    save_labels(predicted_labels, "../data/test_set_labels/")
+    save_labels(predicted_labels, "../../../data/test_set_labels/")
 
 
 if __name__ == '__main__':

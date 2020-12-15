@@ -1,24 +1,16 @@
-import os
-import subprocess
-import sys
-
 import numpy as np
 import tensorflow as tf
-import ipykernel
 import matplotlib.pyplot as plt
 import time
 import imageio
 import glob
 from PIL import Image
-from keras.optimizers import Adam
-from sklearn.model_selection import train_test_split, KFold
 
 from keras import Model
-from keras.layers import Input, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate, Dropout, UpSampling2D, \
+from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, Dropout, UpSampling2D, \
     BatchNormalization, ReLU, SpatialDropout2D
 
 from create_submission_groundtruth import extract_test_images, save_labels
-from images_preproces import center
 from patches import create_patches, get_output_from_patches
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -235,7 +227,7 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
 def main():
     start = time.time()
 
-    data_dir = '../data/'
+    data_dir = '../../../data/'
     training_training_data_path = data_dir + 'training_training/data_augmented'
     training_training_labels_path = data_dir + 'training_training/data_augmented_groundtruth'
     training_validation_data_path = data_dir + 'training_validation/data_augmented'

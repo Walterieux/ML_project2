@@ -21,9 +21,7 @@ def change_color(img):
     datas = img.getdata()
 
     new_image_data = []
-    blue_value = (0, 0, 255)
     red_value = (255, 0, 0)
-    pink_value = (178, 102, 255)
     gray_value = (100, 100, 100)
     for item in datas:
         # change all white (also shades of whites) pixels to red
@@ -32,30 +30,29 @@ def change_color(img):
         else:
             #
             new_image_data.append(gray_value)
-            
+
     # update image data
     img.putdata(new_image_data)
     return img
 
+
 def overwrite_with_images(filename, list_of_test, list_of_labels):
-    
-    for number,image_test in enumerate(list_of_test):
-        
-        #convert L to RGB
+    for number, image_test in enumerate(list_of_test):
+        # convert L to RGB
         image_label = list_of_labels[number].convert("RGB")
-        #change colors
+        # change colors
         image_label = change_color(image_label)
-        #add alpha channel in order to have transparency
+        # add alpha channel in order to have transparency
         image_test.putalpha(1)
         image_label.putalpha(1)
-        
-        #compose images together 
+
+        # compose images together
         alphaComposited = Image.alpha_composite(image_label, image_test)
-        #save image
-        save_img(filename, alphaComposited, number+1, PIL=True)
-    
+        # save image
+        save_img(filename, alphaComposited, number + 1, PIL=True)
+
+
 def center_by_image(list_of_image):
-    
     """
     @input : list_of_image : array like
     @output : return a numpy array where image is centered 
@@ -81,7 +78,6 @@ def center(list_of_image, mean=None, sigma=None, still_to_center=True):
     return (list_of_image - mean) / sigma, mean, sigma
 
 
-
 def extract_images_test(filename, num_images):
     """
     Extract all images from 'filename with test'
@@ -97,6 +93,7 @@ def extract_images_test(filename, num_images):
             img = Image.open(image_filename)
             imgs.append(img)
     return imgs
+
 
 def read_images(filename, num_images):
     """ @input: filename: name of the folder where the images are stored
@@ -191,7 +188,7 @@ def mirror_images(filename, images_data):
         save_img(filename, ImageOps.mirror(image), j + 800 + 1)
 
 
-def save_img(filename, image, number, PIL = False):
+def save_img(filename, image, number, PIL=False):
     """ @input : -filename : name of the directory where the images should be stored
                  -data_images: array of images that will be rotated from [45,90,135,..360] degrees
         @output: store the rotated images in the directory filename
@@ -200,11 +197,11 @@ def save_img(filename, image, number, PIL = False):
     imageid = "satImage_%.3d" % number
     image_filename = filename + imageid + ".png"
     image_filename_bmp = filename + imageid + ".bmp"
-    if PIL==True :
+    if PIL:
         image.save(image_filename_bmp)
 
     else:
-        if (np.array_equal(image, image.astype(bool))):
+        if np.array_equal(image, image.astype(bool)):
             imageio.imwrite(image_filename, (image * 255).astype(np.uint8))
         else:
             imageio.imwrite(image_filename, image.astype(np.uint8))
@@ -217,7 +214,7 @@ def write_mean_std_csv(filename, mean, std):
         writer.writerow(std)
 
 
-data_dir = '../data/'
+data_dir = '../../../data/'
 train_data_filename = data_dir + 'training/images/'
 train_labels_filename = data_dir + 'training/groundtruth/'
 train_augmented = data_dir + 'training/data_augmented/'
@@ -231,8 +228,8 @@ alpha_images_test = data_dir + 'alpha_composite/'
 
 test_images = extract_images_test(test_images_filename, 50)
 
-test_labels = read_images(test_labels_filename, 50 )
+test_labels = read_images(test_labels_filename, 50)
 
-overwrite_with_images(alpha_images_test, test_images, test_labels )
+overwrite_with_images(alpha_images_test, test_images, test_labels)
 
 TRAINING_SIZE = 1600

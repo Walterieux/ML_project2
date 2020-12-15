@@ -4,10 +4,9 @@ Created on Sat Dec 12 10:22:08 2020
 
 @author: jeang
 """
-from convolution import extract_images_test, extract_images
+from convolution import extract_images
 from patchify import patchify, unpatchify
 import numpy as np
-from matplotlib import pyplot as plt
 
 training_size = 400
 test_size = 608
@@ -93,7 +92,7 @@ def get_output_from_patches_with_mean(patches_list, output_shape):
     return images
 
 
-data_dir = '../data/'
+data_dir = '../../../data/'
 test_dir = data_dir + 'test_set_labels/'
 images = extract_images(test_dir)
 correct_labels = data_dir + 'correct_labels/'
