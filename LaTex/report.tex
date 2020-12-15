@@ -94,7 +94,7 @@ We will now detail more precise design decisions, the ideas behind those designs
 As mentioned in section \ref{ssec:data_proc}, we divide all of our images (both training and test images) into patches of smaller size. The choice of patch size depends on the implemented neural net design. If we want to use a large number of batches, we need to reduce the patch size. In our case, most implementations use a patch size of $16 \times 16$ pixels. This coincides with the evaluation criteria. Some of our implementations classify an image pixel by pixel, some classify patch by patch. In general, using patches of side $16$, we found that our model's predictions were better evaluated when predicting patch by patch.
 
 \textit{[PATCH EXTENSIONS]} 
-Let us consider an implementation using patches of side $16$ pixels, and classifying patch by patch. In this case, we notice that patches containing on object that overlays a road are often ill-classified. To counteract this issue, we would like the classifier to take into account the pixels that surround the patch it is working on. That is, when classifying a patch of side 16, we give the classifier a larger input, i.e. a patch of side $24$. Using this method we can improve our prediction accuracies, as shown in figure \ref{fig:extensions}.
+Let us consider an implementation using patches of side $16$ pixels, and classifying patch by patch. In this case, we notice that patches containing on object that overlays a road are often ill-classified. To counteract this issue, we would like the classifier to take into account the pixels that surround the patch it is working on. That is, when classifying a patch of side 16, we give the classifier a larger input, i.e. a patch of side $24$. In order to do this, we add a border of a few pixels to every patch. This border consists of the pixels surrounding the patch in the original image. Note that we have to zero-pad the original image and add a black border of the same size. That way, we can add borders even to patches lying at the rim of our original image. Using this method we can improve our prediction accuracies, as shown in figure \ref{fig:extensions}.
 
 \begin{figure}[h]
 	\centering
@@ -114,7 +114,7 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 \end{figure}
 
 \textit{[VGG-16 NET]}
-One CNN design we implemented and used is inspired by a design known as VGG-16 \cite{vgg}. This neural net essentially consists of 2 or 3 convolution layer, followed by several max-pooling layers, and ends with two fully connected layers. Our model takes a patch of size $16 \times 16$ as an input, and outputs a single value, between $0$ and $1$. We then apply a threshold on that output to characterize the patch as road or background.
+One CNN design we implemented and used is inspired by a design known as VGG-16 \cite{vgg}. This neural net essentially consists of 2 or 3 repetitions of a succession of a convolution layer and a max-pooling layer, and ends with two fully connected layers. The convolution layers (Conv2D in Keras) have a kernel size of ($3$, $3$) with a stride of ($1$, $1$). Our model takes a patch of size $16 \times 16$ as an input, and outputs a single value, between $0$ and $1$. We then apply a threshold on that output to characterize the patch as road or background.
 
 Unfortunately, the main issue of this design is that it is difficult for the model to determine the patch's classification due to the latter's small size. In order to get appreciably good results using this design we would need to apply a quite large patch extension, which uses more memory than we had available on our machines.
 
@@ -124,7 +124,7 @@ Unfortunately, the main issue of this design is that it is difficult for the mod
 
 After observing that many of the predictions made by our designed models contained a fair amount of noise, we decided to use some post-processing to get clearer results. The observed noise mostly consists of single patches wrongly classified as road, lying in between patches correctly classified as background. We also notice some patches surrounded by road-patches that are classified as background.
 
-To subvert this issue, we apply a convolution filter to the resulting prediction. The convolution looks at blocks of patches of size $3 \times 3$, and determines if the central patch should be marked as road or not, depending on the $8$ patches surrounding it. The effect of this filter is shown in figure \ref{fig:post}.
+To subvert this issue, we apply a convolution filter to the resulting prediction. The convolution looks at blocks of patches of size $3 \times 3$, and determines if the central patch should be marked as road or not, depending on the $8$ patches surrounding it. It is a convolution that assumes that most roads are straight lines, either horizontally, vertically or diagonally across the 9 considered patches. The effect of this filter is shown in figure \ref{fig:post}. A patch surrounded by road patches should be classified as a road, and similarly a patch surrounded by background patches should be classified as background.
 
 \begin{figure}[h]
 	\centering
@@ -148,16 +148,22 @@ To subvert this issue, we apply a convolution filter to the resulting prediction
 
 To validate our model we first experimented with k-fold cross validation. However, in order to get satisfactory results from the latter method, we would need to train our model multiple times for every implementation we designed. Since for most implementations a single training round can take a few hours, comparing our models using k-fold cross validation is not an option.
 
-We thus evaluate our models on their validation and test accuracy (accuracies on validation and test sets respectively). The validation and test accuracies are obtained by splitting the data set into 3 parts, the first, major, part is used for training, the second for validating the model and the last is used to obtain the test accuracy. We randomize our data before splitting. The training is run for enough epochs, so as to allow the validation accuracy to be maximized for the implementation we are testing.
+We thus evaluate our models on their validation and test accuracy (accuracies on validation and test sets respectively). The validation and test accuracies are obtained by splitting the data set into 3 parts, the first, major, part is used for training, the second for validating the model and the last is used to obtain the test accuracy. The obtained data ratios are: 
+\begin{itemize}
+	\item Training set : $80\%$ of the data set
+	\item Validation set : $10\%$ of the data set
+	\item Testing set : $10\%$ of the data set
+\end{itemize}
+We randomize our data before splitting. The training is run for enough epochs, so as to allow the validation accuracy to be maximized for the implementation we are testing.
 
 \section{Final Design}
 \label{sec:final}
-
+% TODO: change: we use transformations everywhere
 Although combinations of the techniques mentioned in section \ref{sec:methods} did give us some good results, with test accuracies reaching about $89\%$, our final model, which achieved the best results, uses none of those techniques.
 
 Our final design is based on a variant of a U-Net model by Peter Hönigschmid \cite{unet}. Our model takes as input an image patch of dimensions ($256$, $256$, $3$). It outputs a prediction for every pixel, i.e. the output has the shape ($256$, $256$). Every entry of the output is a single value, between $0$ and $1$. We apply a threshold on that output to characterize every pixel as road or background. Since the model contains many layers and parameters, we will not detail it here. A complete representation of the model can be seen in \texttt{model\_plot.png}. 
 
-We augmented the basis of Peter Hönigschmid \cite{unet} using ideas from a paper by Shaofeng Cai, Yao Shu, Wei Wang, Gang Chen,Member, and Beng Chin Ooi \cite{final}. The extracted and applied techniques consist in the following.
+We augmented the basis of Peter Hönigschmid \cite{unet} using ideas from a paper by Shaofeng Caiet al. \cite{final}. The extracted and applied techniques consist in the following.
 
 After each convolution in our initial U-Net model, we perform a batch normalization, followed by a Relu activation function and two dimensional spatial dropout, in that order. Let us detail the batch normalization and spatial dropout.
 
@@ -169,7 +175,7 @@ Two dimensional spatial dropout (\textit{SpatialDropout2D} in Keras Tensorflow) 
 \section{Results}
 \label{sec:results}
 
-Let us now expose the results obtained using our final model. We trained our model using the Collab infrastructure provided by Google. The training was done on an NVidia Tesla V100-SXM2-16GB GPU and required 12GB of memory. The running time to obtain the following results was about 5 hours.
+Let us now expose the results obtained using our final model. We trained our model using the Colab infrastructure provided by Google. The training was done on an NVidia Tesla V100-SXM2-16GB GPU and required 12GB of memory. The running time to obtain the following results was about 5 hours.
 
 Figure \ref{fig:final} shows the training evolution of our model. The locally achieved test accuracy is of $92.7\%$. In the AiCrowd competition, we attained an accuracy of $94.3\%$ and a corresponding F1 score of $89.4\%$. Figure \ref{fig:comp} shows a test images with the corresponding predictions, made by our model, highlighted in reed.
 
@@ -188,7 +194,9 @@ Figure \ref{fig:final} shows the training evolution of our model. The locally ac
 \section{Conclusion}
 \label{sec:conclusion}
 
-Our final model achieves a test accuracy of $94.3\%$ and an F1 score of $89.4\%$. Due to time restrictions we were unfortunately unable to enhance our final model any further than we did. In fact, we experimented with many different models and CNN designs throughout the project's development. Sadly, we only found out about the U-Net-like model quite late in the development process. We would have liked to play further with our final model. Undoubtedly we could have improved its performance, using for example the methods mentioned in section \ref{sec:methods}.
+% TODO : fill xxx
+Our final model improves in accuracy by about $XXX\%$ compared to our a baseline model. Due to time restrictions we were unfortunately unable to enhance our final model any further than we did. In fact, we experimented with many different models and CNN designs throughout the project's development. Sadly, we only found out about the U-Net-like model quite late in the development process. We would have liked to play further with our final model. Undoubtedly we could have improved its performance, using for example the methods mentioned in section \ref{sec:methods}. 
+% TODO : what we learned?
 
 \begin{figure}[h]
 	\centering
