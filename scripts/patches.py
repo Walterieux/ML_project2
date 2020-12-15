@@ -39,7 +39,7 @@ def create_patches(data, patch_shape):
 
 def get_output_from_patches(patches_list, output_shape):
     """ patches array like [nb_images * number_patches, img_patch_size, img_patch_size ] : 9 for test and 4 for training
-        output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending 
+        output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending
         of which kind of image you create
     ------------------------output ----------------------------------
     return initial image """
@@ -61,7 +61,7 @@ def get_output_from_patches(patches_list, output_shape):
 
 def get_output_from_patches_with_mean(patches_list, output_shape):
     """ patches array like [nb_images * number_patches, img_patch_size, img_patch_size ] : 9 for test and 4 for training
-        output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending 
+        output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending
         of which kind of image you create
     ------------------------output ----------------------------------
     return initial image """
