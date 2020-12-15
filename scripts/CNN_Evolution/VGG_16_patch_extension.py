@@ -24,10 +24,10 @@ tf.compat.v1.keras.backend.set_session(session)
 """
 
 img_patch_size = 16  # must be a divisor of 400 = 4 * 4 * 5 * 5
-border_size = 1
+border_size = 16
 img_patch_with_border_size = img_patch_size + (2 * border_size)
 img_shape = (400, 400)
-NUM_EPOCHS = 1
+NUM_EPOCHS = 50
 
 
 def extract_images(image_path):
@@ -244,7 +244,7 @@ def train_model(train_images, validation_images, test_images, train_labels, vali
 
     history = model.fit(patches_train_images,
                         patches_train_labels,
-                        batch_size=8,
+                        batch_size=32,
                         epochs=NUM_EPOCHS,
                         validation_data=(patches_validation_images, patches_validation_labels))
 
