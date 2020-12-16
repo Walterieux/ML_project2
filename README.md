@@ -68,5 +68,5 @@ models using Google Colab. All training sessions are run for 50 epochs, since th
 The models are trained on an NVidia Tesla V100-SXM2-16GB GPU. Training times vary depending on the model. Our final model's
 training time was about 5 hours, using the described environment.
 
-![alt text](https://github.com/Walterieux/ML_Project2/blob/main/image.jpg?raw=true)
+![plot](image.jpeg?raw=true "Final Prediction")
  
