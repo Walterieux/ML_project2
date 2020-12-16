@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  16 DEC 2020 09:28
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  16 DEC 2020 11:50
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -366,15 +366,15 @@ Package pdftex.def Info: CNN_with_border_16.png  used on input line 113.
 <comparison_1.png, id=78, 854.19125pt x 854.19125pt>
 File: comparison_1.png Graphic file (type png)
 <use comparison_1.png>
-Package pdftex.def Info: comparison_1.png  used on input line 137.
+Package pdftex.def Info: comparison_1.png  used on input line 136.
 (pdftex.def)             Requested size: 117.07635pt x 117.07042pt.
 <comparison_2.png, id=79, 855.195pt x 855.195pt>
 File: comparison_2.png Graphic file (type png)
 <use comparison_2.png>
-Package pdftex.def Info: comparison_2.png  used on input line 144.
+Package pdftex.def Info: comparison_2.png  used on input line 143.
 (pdftex.def)             Requested size: 117.07635pt x 117.06444pt.
 LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 1
-67.
+66.
 
 (c:/texlive/2019/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
@@ -383,7 +383,7 @@ File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Underfull \hbox (badness 2653) in paragraph at lines 203--204
+Underfull \hbox (badness 2653) in paragraph at lines 202--203
 \OT1/ptm/m/n/10 on the AiCrowd plat-form. De-noted as \OT1/ptm/m/it/10 Ac-cu-ra
 cy
  []
@@ -392,12 +392,12 @@ cy
 <U_Net_patches_256.png, id=107, 433.62pt x 289.08pt>
 File: U_Net_patches_256.png Graphic file (type png)
 <use U_Net_patches_256.png>
-Package pdftex.def Info: U_Net_patches_256.png  used on input line 212.
+Package pdftex.def Info: U_Net_patches_256.png  used on input line 211.
 (pdftex.def)             Requested size: 243.91125pt x 162.60709pt.
 <prediction.jpeg, id=109, 610.28pt x 610.28pt>
 File: prediction.jpeg Graphic file (type jpg)
 <use prediction.jpeg>
-Package pdftex.def Info: prediction.jpeg  used on input line 226.
+Package pdftex.def Info: prediction.jpeg  used on input line 225.
 (pdftex.def)             Requested size: 213.6012pt x 213.6012pt.
 
 (./report.bbl
@@ -426,15 +426,15 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 236.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 235.
 [4 <./U_Net_patches_256.png> <./prediction.jpeg>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 236.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 235.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 236.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 236.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 235.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 235.
 Package rerunfilecheck Info: File `report.out' has not changed.
 (rerunfilecheck)             Checksum: 3DD7540E69A05CD69720F0E1A3C2B9D9;635.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 236.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 235.
  ) 
 Here is how much of TeX's memory you used:
  7082 strings out of 480994
@@ -443,7 +443,7 @@ Here is how much of TeX's memory you used:
  22464 multiletter control sequences out of 15000+600000
  569960 words of font info for 88 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,8n,42p,991b,430s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 41i,8n,42p,1002b,430s stack positions out of 5000i,500n,10000p,200000b,80000s
 {c:/texlive/2019/texmf-dist/fonts/enc/dvips/base/8r.enc}<c:/texlive/2019/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2019/texmf-dist/fo
 nts/type1/public/amsfonts/cm/cmmi8.pfb><c:/texlive/2019/texmf-dist/fonts/type1/
@@ -455,7 +455,7 @@ c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/texlive
 /fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/t
 imes/utmbi8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><
 c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on report.pdf (4 pages, 365767 bytes).
+Output written on report.pdf (4 pages, 365765 bytes).
 PDF statistics:
  178 PDF objects out of 1000 (max. 8388607)
  149 compressed objects within 2 object streams

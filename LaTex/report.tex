@@ -94,17 +94,17 @@ We will now detail more precise design decisions, the ideas behind those designs
 
 \smallskip
 \textit{[PATCH SIZE]} 
-As already mentioned, we divide all of our images (both training and test images) into patches of smaller size. The choice of patch size depends on the implemented neural net design. If we want to use a large number of batches, we need to reduce the patch size. In our case, most implementations use a patch size of $16 \times 16$ pixels. This coincides with the evaluation criteria. Some of our implementations classify an image pixel by pixel, some classify patch by patch (classify every pixel as road or not vs. classify every patch as road or not). In general, using patches of side $16$, we found that our models' predictions were better evaluated when predicting patch by patch than when predicting pixel by pixel. Our final and best performing model however, works of patches of size $256 \times 256$ and predicts every pixel of that patch.
+As already mentioned, we divide all of our images (both training and test images) into patches of smaller size. The choice of patch size depends on the implemented neural net design. If we want to use a large number of batches, we need to reduce the patch size. In our case, most implementations use a patch size of $16 \times 16$ pixels. This coincides with the evaluation criteria. Some of our implementations classify an image pixel by pixel, some classify patch by patch. We classify a patch as road if more than half of its pixels are classified as road. In general, using patches of side $16$, we found that our models' predictions were better evaluated when predicting patch by patch than when predicting pixel by pixel. Our final and best performing model however, works of patches of size $256 \times 256$ and predicts every pixel of that patch.
 
 \smallskip
 \textit{[PATCH EXTENSIONS]} 
-Let us consider an implementation using patches of side $16$ pixels, and classifying patch by patch. In this case, we notice that patches containing an object that overlays a road are often ill-classified. To counteract this issue, we would like the classifier to take into account the pixels that surround the patch it is working on. That is, when classifying a patch of side 16, we give the classifier a larger input, i.e. a patch of side $24$. In order to do this, we add a border of a few pixels to every patch. This border consists of the pixels surrounding the patch in the original image. Note that we have to zero-pad the original image in order to add a black border to the latter, of the same size than the size of the borders we add to the patches. That way, we can add borders even to patches lying at the rim of our original image. Using this method we can significantly improve our prediction accuracies, as shown in figure \ref{fig:extensions}.
+Let us consider an implementation using patches of side $16$ pixels, and classifying patch by patch. In this case, we notice that patches containing an object that overlays a road are often ill-classified. To counteract this issue, we would like the classifier to take into account the pixels that surround the patch it is working on. That is, when classifying a patch of side 16, we give the classifier a larger input, i.e. a patch of side $24$. In order to do this, we add a border of a few pixels to every patch. This border consists of the pixels surrounding the patch in the original image. Note that we have to add a border to the original image as well, of the same size than that of the borders we add to patches. We use reflection padding to create this border. That way, we can add borders even to patches lying at the rim of our original image. Using this method we can significantly improve our prediction accuracies, as shown in figure \ref{fig:extensions}.
 
 \begin{figure}[h]
 	\centering
 	\begin{minipage}[b]{0.48\linewidth}
 		\includegraphics[width=\textwidth]{CNN_with_border_0.png}
-		\captionsetup{aboveskip=0.3cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
+		\captionsetup{aboveskip=0.1cm,justification=centering, margin=0.1cm, labelfont=footnotesize, textfont=footnotesize}
 		\caption{Accuracies of our VGG-16-like model (with patches of size $16 \times 16$, without patch extension)}
 		\label{fig:noExtensions}
 	\end{minipage}
@@ -117,7 +117,6 @@ Let us consider an implementation using patches of side $16$ pixels, and classif
 	\end{minipage}
 \end{figure}
 
-\smallskip
 \textit{[VGG-16-LIKE]}
 One CNN design we implemented and used is inspired by a design known as VGG-16 \cite{vgg}. This neural net essentially consists of 3 repetitions of a succession of multiple convolution layers and a max-pooling layer, and ends with two fully connected layers. The convolution layers (Conv2D in Keras) have a kernel size of ($3$, $3$) with a stride of ($1$, $1$). Our model takes a patch of size $16 \times 16$ as an input, and outputs a single value, between $0$ and $1$. We then apply a threshold on that output to characterize the patch as road or background.
 
@@ -205,7 +204,7 @@ Let us now expose the results obtained using our final model. We trained our mod
 \end{itemize}
 The models in question are those described in previous sections. Note that \textit{VGG-16-like with patch extension} is identical to the \textit{VGG-16-like} model, except that is uses patch extension, with borders of size $16$ pixels. All models are trained on the same, extended data set (i.e. a data set augmented using \textit{TRANSFORMATIONS}, cf. section \ref{ssec:data_proc}). They are locally evaluated and trained as described in section \ref{ssec:model_validation}.
 
-Figure \ref{fig:final} shows the training evolution of our model. The locally achieved test accuracy is of $92.7\%$. In the AiCrowd competition, we attained an accuracy of $94.3\%$ and a corresponding F1 score of $89.4\%$. Figure \ref{fig:comp} shows a test image with the corresponding predictions, made by our model, highlighted in reed.
+Figure \ref{fig:final} shows the training evolution of our model. The locally achieved test accuracy is of $92.7\%$. In the AiCrowd competition, we attained an accuracy of $94.3\%$ and a corresponding F1 score of $89.4\%$. Figure \ref{fig:comp} shows a test image with the corresponding predictions, made by our model, highlighted in red.
 
 \begin{figure}[h]
 	\centering
