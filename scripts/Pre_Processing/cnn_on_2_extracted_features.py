@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# TODO : CAREFUL WITH PATHS
 """
 ======================================================
 ======================================================
@@ -15,6 +14,7 @@ recognition, we should not need to manually extract
 anything. The CNN should find any such features by itself.
 That is why we quickly discarded this idea and did not
 bother finding good CNN to get results on these features.
+In the report, refer to [EDGES] and [DISTANCE].
 ======================================================
 ======================================================
 
