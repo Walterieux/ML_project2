@@ -1,4 +1,16 @@
 # -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains the methods and functions we used
+to load, enhance and save our data set. It contains the
+various data pre-processing techniques mentioned in our
+report, in section III A.
+======================================================
+======================================================
+"""
+
 import csv
 
 import numpy as np
@@ -9,10 +21,10 @@ import imageio
 
 
 def change_color(img):
-    """ input : binary image 
-        ----------------------output ----------------
-        return an image where the white pixels become red and black become gray 
     """
+    creates an image where the white pixels become red and black become gray
+    """
+
     datas = img.getdata()
 
     new_image_data = []
@@ -32,6 +44,9 @@ def change_color(img):
 
 
 def overwrite_with_images(filename, list_of_test, list_of_labels):
+    """
+    creates images which overlay our prediction and the original image
+    """
     for number, image_test in enumerate(list_of_test):
         # convert L to RGB
         image_label = list_of_labels[number].convert("RGB")
@@ -49,9 +64,10 @@ def overwrite_with_images(filename, list_of_test, list_of_labels):
 
 def center_by_image(list_of_image):
     """
-    @input : list_of_image : array like
-    @output : return a numpy array where image is centered 
+    centers a given list of images, as a numpy array
+    centers w.r.t one image
     """
+
     centered_image = np.zeros(list_of_image.shape)
     for number, image in enumerate(list_of_image):
         mean = np.mean(image, axis=(0, 1))
@@ -62,8 +78,8 @@ def center_by_image(list_of_image):
 
 def center(list_of_image, mean=None, sigma=None, still_to_center=True):
     """
-    @input : @list_of_image : array like [n,m,l,3]
-    @return centered data : data - mean / std
+    centers a given list of images, as a numpy array
+    centers w.r.t all images
     """
 
     if still_to_center:
@@ -91,9 +107,11 @@ def extract_images_test(filename, num_images):
 
 
 def read_images(filename, num_images):
-    """ @input: filename: name of the folder where the images are stored
-            num_images: number of images stored in the folder
-    @output: list of images stored in the folder
+    """
+    reads the given images into an array
+
+    @filename: name of the folder where the images are stored
+    @num_images: number of images stored in the folder
     """
 
     imgs = []
@@ -107,9 +125,11 @@ def read_images(filename, num_images):
 
 
 def rotate_images(filename, data_images):
-    """ @input: filename: name of the folder where the images will bestored
-            data_images: list of images that will be rotated of [45,90,135..,360] degrees
-    @output: images rotated stored in the folder
+    """
+    rotates the given images and stores them
+
+    @filename: name of the folder where the images will be stored
+    @data_images: list of images that will be rotated of [45,90,135..,360] degrees
     """
 
     for i, image in enumerate(data_images):
@@ -122,9 +142,11 @@ def rotate_images(filename, data_images):
 
 
 def mirror_images(filename, data_images):
-    """ @input: filename: name of the folder where the images will bestored
-            data_images: list of images
-    @output: store the mirror images in the folder
+    """
+    mirrors the given images along the vertical axis and stores them
+
+    @filename: name of the folder where the images will be stored
+    @data_images: list of images to be mirrored
     """
 
     for i, image in enumerate(data_images):
@@ -132,9 +154,11 @@ def mirror_images(filename, data_images):
 
 
 def edges_images(filename, data_images):
-    """ @input: filename: name of the folder where the images will bestored
-            data_images: list of images that we will get the edges
-    @output: images edges in the folder
+    """
+    applies a Sobel filter on the given images and stores the results
+
+    @filename: name of the folder where the resulting images will be stored
+    @data_images: list of images to be treated
     """
 
     for j, image in enumerate(data_images):
@@ -149,9 +173,12 @@ def edges_images(filename, data_images):
 
 
 def get_mean_gray_value(images_data, images_groundtruth):
-    """ input: @images_data  list of images
-                @images_ground: list of images groundtruth
-        calculate: the mean value RGB of the road """
+    """
+    computes the average color of a known road
+
+    @images_data  list of images
+    @images_ground: list of corresponding groundtruths
+    """
 
     mean_value_gray = np.zeros(3)
     for i, image in enumerate(images_data):
@@ -163,10 +190,13 @@ def get_mean_gray_value(images_data, images_groundtruth):
 
 
 def distance_image(filename, images_data, mean_value_gray):
-    """ input:  @filename: plae where the distances images will be stored
-                @images_data  list of images
-                @mean_value_gray: mean value of road in our training set
-        calculate: the distance image with mean value of road"""
+    """
+    computes the distance of an image (for more details, see report, [DISTANCE])
+
+    @filename: where the distance images will be stored
+    @images_data  list of images
+    @mean_value_gray: known average color of a road
+    """
 
     for j, image in enumerate(images_data):
         image = np.array(image)
@@ -174,19 +204,9 @@ def distance_image(filename, images_data, mean_value_gray):
         save_img(filename, norm_image, j + 1)
 
 
-def mirror_images(filename, images_data):
-    """ input:  @filename: plae where the distances images will be stored
-                @images_data  list of images
-        output:store the mirror images of the images_data in the folder filename"""
-
-    for j, image in enumerate(images_data):
-        save_img(filename, ImageOps.mirror(image), j + 800 + 1)
-
-
 def save_img(filename, image, number, PIL=False):
-    """ @input : -filename : name of the directory where the images should be stored
-                 -data_images: array of images that will be rotated from [45,90,135,..360] degrees
-        @output: store the rotated images in the directory filename
+    """
+    saves an image, that can be given either as a pillow image (PIL) or a numpy array
     """
 
     imageid = "satImage_%.3d" % number

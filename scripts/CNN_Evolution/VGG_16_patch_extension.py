@@ -1,4 +1,19 @@
-# TODO add description + good values
+# -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains the code for running and evaluating
+the training of our variant of a VGG-16 model, enhanced
+with the method we call patch extension in our report.
+Note that we refer to patch extension as "borders" in
+this script.
+The basis on which this model is built on can be found here:
+https://neurohive.io/en/popular-networks/vgg16/
+======================================================
+======================================================
+"""
+
 import glob
 import time
 
@@ -13,7 +28,7 @@ from tensorflow import keras
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dropout
 
-from scripts.Post_Processing import create_submission_groundtruth
+from Post_Processing import create_submission_groundtruth
 
 """
 # Use this if GPU error during launch
@@ -46,7 +61,9 @@ def extract_images(image_path):
 
 
 def extract_labels(label_path):
-    """Extract all labels from 'label_path'"""
+    """
+    Extract all labels from 'label_path'
+    """
 
     imgs = []
     for img_path in glob.glob(label_path + "/*.png"):
@@ -60,7 +77,9 @@ def extract_labels(label_path):
 
 
 def create_patches(data, patch_shape):
-    """separate image into patches, data is a collection of images"""
+    """
+    separate image into patches, data is a collection of images
+    """
 
     imgs = []
     for i in range(data.shape[0]):
@@ -79,7 +98,9 @@ def create_patches(data, patch_shape):
 
 
 def create_patches_with_border(data, patch_shape, border, batch_name=""):
-    """separate image into patches, data is a collection of images"""
+    """
+    separate image into patches, data is a collection of images
+    """
 
     imgs = []
     for i in range(data.shape[0]):
@@ -107,10 +128,8 @@ def characterise_each_patch_as_road_or_not(labels):
     Binary classification for each patches, a patch is considered as a road if
     he has more than 50% road on it
 
-    Parameters
-    ----------
-    labels : array_like
-        array of patches
+    @labels : array_like
+    @array of patches
     """
 
     new_labels = np.zeros((labels.shape[0]))

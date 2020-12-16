@@ -21,9 +21,44 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
-\bibitem{anderson04}
-G.~Anderson, ``How to write a paper in scientific journal style and format,''
-  2004,
-  http://abacus.bates.edu/~ganderso/biology/resources/writing/HTWtoc.html.
+\bibitem{vgg}
+\BIBentryALTinterwordspacing
+M.~ul~Hassan, ``Vgg16 – convolutional network for classification and
+  detection,'' \emph{Neurohive}, 2018. [Online]. Available:
+  \url{https://neurohive.io/en/popular-networks/vgg16/}
+\BIBentrySTDinterwordspacing
+
+\bibitem{unet}
+\BIBentryALTinterwordspacing
+P.~Hönigschmid, ``U-net, dropout, augmentation, stratification,''
+  \emph{Kaggle}, 2018. [Online]. Available:
+  \url{https://www.kaggle.com/phoenigs/u-net-dropout-augmentation-stratification}
+\BIBentrySTDinterwordspacing
+
+\bibitem{final}
+\BIBentryALTinterwordspacing
+W.~W. G. C.~M. Shaofeng~Cai, Yao~Shu and B.~C. Ooi, ``Efficient and effective
+  dropout for deepconvolutional neural networks,'' 2020. [Online]. Available:
+  \url{https://arxiv.org/pdf/1904.03392.pdf}
+\BIBentrySTDinterwordspacing
+
+\bibitem{bn}
+\BIBentryALTinterwordspacing
+J.~Brownlee, ``A gentle introduction to batch normalization for deep neural
+  networks,'' \emph{Machine Learning Mastery}, 2019. [Online]. Available:
+  \url{https://machinelearningmastery.com/batch-normalization-for-training-of-deep-neural-networks/}
+\BIBentrySTDinterwordspacing
+
+\bibitem{keras}
+\BIBentryALTinterwordspacing
+Google. [Online]. Available:
+  \url{https://www.tensorflow.org/api_docs/python/tf/keras/layers/SpatialDropout2D}
+\BIBentrySTDinterwordspacing
+
+\bibitem{stack}
+\BIBentryALTinterwordspacing
+StackExchange. [Online]. Available:
+  \url{https://stats.stackexchange.com/questions/282282/how-is-spatial-dropout-in-2d-implemented}
+\BIBentrySTDinterwordspacing
 
 \end{thebibliography}

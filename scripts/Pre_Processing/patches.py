@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains code that is useful for creating
+and using the patches, described in our report (PATCHES).
+We use the patchify library to split images into patches
+and put them back together after training/prediction.
+======================================================
+======================================================
+"""
 
 from patchify import patchify, unpatchify
 import numpy as np
@@ -9,7 +20,9 @@ img_patch_size = 256
 
 
 def create_patches(data, patch_shape):
-    """separate image into patches, data is a collection of images"""
+    """
+    separate image into patches, data is a collection of images
+    """
 
     imgs = []
 
@@ -32,11 +45,14 @@ def create_patches(data, patch_shape):
 
 
 def get_output_from_patches(patches_list, output_shape):
-    """ patches array like [nb_images * number_patches, img_patch_size, img_patch_size ] : 9 for test and 4 for training
-        output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending
-        of which kind of image you create
-    ------------------------output ----------------------------------
-    return initial image """
+    """
+    reconstructs an image given its patches
+
+    @patches_list: array like [nb_images * number_patches, img_patch_size, img_patch_size ] :
+    9 for test and 4 for training
+    @output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending
+    of which kind of image you create
+    """
 
     if output_shape[0] == training_size:
         nb_matrix_by_row = 2
@@ -55,11 +71,14 @@ def get_output_from_patches(patches_list, output_shape):
 
 
 def get_output_from_patches_with_mean(patches_list, output_shape):
-    """ patches array like [nb_images * number_patches, img_patch_size, img_patch_size ] : 9 for test and 4 for training
-        output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending
-        of which kind of image you create
-    ------------------------output ----------------------------------
-    return initial image """
+    """
+    reconstructs an image given its patches, patches may overlap, in which case we average the overlapping values
+
+    @patches_list: array like [nb_images * number_patches, img_patch_size, img_patch_size ] :
+    9 for test and 4 for training
+    @output_shape : array_like :[training_size, training_size] or [test_size, test_size] depending
+    of which kind of image you create
+    """
 
     if output_shape[0] == training_size:
         nb_matrix_by_row = 2

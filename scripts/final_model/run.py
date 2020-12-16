@@ -27,6 +27,7 @@ from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, concatenate, Dr
     BatchNormalization, ReLU, SpatialDropout2D
 
 from Post_Processing.create_submission_groundtruth import extract_test_images, save_labels
+from Post_Processing.mask_to_submission import masks_to_submission
 from Pre_Processing import patches
 
 """
@@ -275,6 +276,13 @@ def main():
 
     end = time.time()
     print("Computation time: ", end - start)
+
+    submission_filename = '../submission.csv'
+    image_filenames = []
+    for i in range(1, 51):
+        image_filename = '../../data/test_set_labels/satImage_' + '%.3d' % i + '.png'
+        image_filenames.append(image_filename)
+    masks_to_submission(submission_filename, *image_filenames)
 
 
 if __name__ == '__main__':

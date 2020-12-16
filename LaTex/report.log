@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  12 DEC 2020 14:30
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  16 DEC 2020 14:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -344,49 +344,77 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <7> on input line 40.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 40.
-<correlation.png, id=49, 433.62pt x 289.08pt>
-File: correlation.png Graphic file (type png)
-<use correlation.png>
-Package pdftex.def Info: correlation.png  used on input line 56.
-(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
-<grid_search.png, id=51, 433.62pt x 289.08pt>
-File: grid_search.png Graphic file (type png)
-<use grid_search.png>
-Package pdftex.def Info: grid_search.png  used on input line 63.
-(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 65.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 65.
+ [1{c:/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
 
+
+]
+<CNN_with_border_0.png, id=60, 462.528pt x 346.896pt>
+File: CNN_with_border_0.png Graphic file (type png)
+<use CNN_with_border_0.png>
+Package pdftex.def Info: CNN_with_border_0.png  used on input line 106.
+(pdftex.def)             Requested size: 117.07635pt x 87.80359pt.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 108.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 108.
+<CNN_with_border_16.png, id=62, 462.528pt x 346.896pt>
+File: CNN_with_border_16.png Graphic file (type png)
+<use CNN_with_border_16.png>
+Package pdftex.def Info: CNN_with_border_16.png  used on input line 113.
+(pdftex.def)             Requested size: 117.07635pt x 87.80359pt.
+ [2 <./CNN_with_border_0.png> <./CNN_with_border_16.png>]
+<comparison_1.png, id=78, 854.19125pt x 854.19125pt>
+File: comparison_1.png Graphic file (type png)
+<use comparison_1.png>
+Package pdftex.def Info: comparison_1.png  used on input line 136.
+(pdftex.def)             Requested size: 117.07635pt x 117.07042pt.
+<comparison_2.png, id=79, 855.195pt x 855.195pt>
+File: comparison_2.png Graphic file (type png)
+<use comparison_2.png>
+Package pdftex.def Info: comparison_2.png  used on input line 143.
+(pdftex.def)             Requested size: 117.07635pt x 117.06444pt.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 1
+66.
+
+(c:/texlive/2019/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+)
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[1{c:/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+
+Underfull \hbox (badness 2653) in paragraph at lines 202--203
+\OT1/ptm/m/n/10 on the AiCrowd plat-form. De-noted as \OT1/ptm/m/it/10 Ac-cu-ra
+cy
+ []
+
+[3 <./comparison_1.png (PNG copy)> <./comparison_2.png (PNG copy)>]
+<U_Net_patches_256.png, id=108, 433.62pt x 289.08pt>
+File: U_Net_patches_256.png Graphic file (type png)
+<use U_Net_patches_256.png>
+Package pdftex.def Info: U_Net_patches_256.png  used on input line 211.
+(pdftex.def)             Requested size: 243.91125pt x 162.60709pt.
+<prediction.jpeg, id=110, 610.28pt x 610.28pt>
+File: prediction.jpeg Graphic file (type jpg)
+<use prediction.jpeg>
+Package pdftex.def Info: prediction.jpeg  used on input line 225.
+(pdftex.def)             Requested size: 213.6012pt x 213.6012pt.
+
+(./report.bbl
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <9> on input line 28.
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--63
+[]\OT1/ptm/m/n/9 StackExchange. [On-line]. Avail-able:
+ []
 
 
- <./correlation.png> <./grid_search.png>]
-File: correlation.png Graphic file (type png)
-<use correlation.png>
-Package pdftex.def Info: correlation.png  used on input line 123.
-(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
-File: grid_search.png Graphic file (type png)
-<use grid_search.png>
-Package pdftex.def Info: grid_search.png  used on input line 130.
-(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
-File: correlation.png Graphic file (type png)
-<use correlation.png>
-Package pdftex.def Info: correlation.png  used on input line 157.
-(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
-File: grid_search.png Graphic file (type png)
-<use grid_search.png>
-Package pdftex.def Info: grid_search.png  used on input line 164.
-(pdftex.def)             Requested size: 117.07635pt x 78.04822pt.
+Underfull \hbox (badness 10000) in paragraph at lines 60--63
+[]$\OT1/ptm/m/n/9 https : / / stats . stackexchange . com / questions / 282282 
+/
+ []
 
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[2] (./report.bbl)
+)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -398,39 +426,39 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 217.
-[3
-
-]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 217.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 235.
+[4 <./U_Net_patches_256.png> <./prediction.jpeg>]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 235.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 217.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 217.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 235.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 235.
 Package rerunfilecheck Info: File `report.out' has not changed.
-(rerunfilecheck)             Checksum: 1B9212CC18E9B1B729FA5DD1EC69A630;635.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 217.
+(rerunfilecheck)             Checksum: 3DD7540E69A05CD69720F0E1A3C2B9D9;635.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 235.
  ) 
 Here is how much of TeX's memory you used:
- 6999 strings out of 480994
- 113750 string characters out of 5916032
- 378219 words of memory out of 5000000
- 22402 multiletter control sequences out of 15000+600000
- 567397 words of font info for 82 fonts, out of 8000000 for 9000
+ 7082 strings out of 480994
+ 114992 string characters out of 5916032
+ 379508 words of memory out of 5000000
+ 22464 multiletter control sequences out of 15000+600000
+ 569960 words of font info for 88 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,8n,42p,824b,430s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 41i,8n,42p,1002b,430s stack positions out of 5000i,500n,10000p,200000b,80000s
 {c:/texlive/2019/texmf-dist/fonts/enc/dvips/base/8r.enc}<c:/texlive/2019/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2019/texmf-dist/fo
 nts/type1/public/amsfonts/cm/cmmi8.pfb><c:/texlive/2019/texmf-dist/fonts/type1/
 public/amsfonts/cm/cmr10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/ams
 fonts/cm/cmr8.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cm
-sy10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texli
-ve/2019/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb><c:/texlive/2019/texmf-dis
-t/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/
-times/utmri8a.pfb>
-Output written on report.pdf (3 pages, 132359 bytes).
+sy10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><
+c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/texlive
+/2019/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb><c:/texlive/2019/texmf-dist
+/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/t
+imes/utmbi8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><
+c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on report.pdf (4 pages, 365816 bytes).
 PDF statistics:
- 124 PDF objects out of 1000 (max. 8388607)
- 104 compressed objects within 2 object streams
- 20 named destinations out of 1000 (max. 500000)
- 99 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 178 PDF objects out of 1000 (max. 8388607)
+ 149 compressed objects within 2 object streams
+ 27 named destinations out of 1000 (max. 500000)
+ 119 words of extra memory for PDF output out of 10000 (max. 10000000)
 
