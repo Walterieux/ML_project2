@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
-# TODO add a description
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains a range of different functions
+used throughout the project's files.
+======================================================
+======================================================
+"""
+
 import glob
 import os
 

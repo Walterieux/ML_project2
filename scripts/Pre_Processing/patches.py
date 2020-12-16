@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains code that is useful for creating
+and using the patches, described in our report (PATCHES).
+We use the patchify library to split images into patches
+and put them back together after training/prediction.
+======================================================
+======================================================
+"""
 
 from patchify import patchify, unpatchify
 import numpy as np

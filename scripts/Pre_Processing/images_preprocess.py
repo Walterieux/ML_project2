@@ -1,4 +1,16 @@
 # -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains the methods and functions we used
+to load, enhance and save our data set. It contains the
+various data pre-processing techniques mentioned in our
+report, in section III A.
+======================================================
+======================================================
+"""
+
 import csv
 
 import numpy as np

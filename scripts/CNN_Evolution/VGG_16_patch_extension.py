@@ -1,4 +1,19 @@
-# TODO add description + good values
+# -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains the code for running and evaluating
+the training of our variant of a VGG-16 model, enhanced
+with the method we call patch extension in our report.
+Note that we refer to patch extension as "borders" in
+this script.
+The basis on which this model is built on can be found here:
+https://neurohive.io/en/popular-networks/vgg16/
+======================================================
+======================================================
+"""
+
 import glob
 import time
 

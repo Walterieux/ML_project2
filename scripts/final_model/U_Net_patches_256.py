@@ -1,4 +1,19 @@
-#TODO add a description
+# -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains the code for running and evaluating
+the training of our final, best performing model. Its
+precise description can be found in the report. Note that
+the parameters used in this script are designed to be run
+on a beefy GPU, with quite some RAM available. The basis
+U-Net model this implementation is built on can be found here:
+https://www.kaggle.com/phoenigs/u-net-dropout-augmentation-stratification
+======================================================
+======================================================
+"""
+
 import numpy as np
 import ipykernel
 import matplotlib.pyplot as plt

@@ -1,4 +1,13 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script is useful for creating the submission csv
+file given the predicted images.
+======================================================
+======================================================
+"""
 
 import os
 import numpy as np

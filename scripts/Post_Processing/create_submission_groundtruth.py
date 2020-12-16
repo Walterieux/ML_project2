@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script is useful for creating the submission csv
+file given a saved, precomputed model.
+======================================================
+======================================================
+"""
+
 import imageio
 from tensorflow import keras
 import numpy as np

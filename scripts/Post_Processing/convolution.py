@@ -1,5 +1,18 @@
 # -*- coding: utf-8 -*-
-# TODO add a description
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains the code for running the post-processing
+image convolution. The convolution acts as a filter that
+de-noises the image, so as to obtain a clearer picture
+of what the predicted roads look like. It operates on
+an image of classified patches. The patches' size should be
+16 by 16 pixels. The input image should be black and white.
+======================================================
+======================================================
+"""
+
 import glob
 import os
 

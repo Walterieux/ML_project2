@@ -1,4 +1,18 @@
-# TODO add description + good values
+# -*- coding: utf-8 -*-
+"""
+======================================================
+======================================================
+DESCRIPTION:
+This script contains the code for running and evaluating
+the training of our variant of a VGG-16 model. This model
+is referred to as VGG-16-like in the report. This model
+constitutes a baseline we use to compare subsequent models.
+The basis on which this model is built on can be found here:
+https://neurohive.io/en/popular-networks/vgg16/
+======================================================
+======================================================
+"""
+
 import glob
 import time
 
