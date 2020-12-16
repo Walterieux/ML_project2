@@ -42,6 +42,7 @@ Note that pip (or pip3) is required to install some dependecies.
 
 ## Files
 
+* `scripts/final_model/run.py` reproduces the training of our final model and the creation of our best submission CSV file.
 * folder `scripts` contains pyhton scripts that contain various methods and the 
 implementations thereof, as mentioned in the report. The comments in the scripts
 themselves detail their function.
