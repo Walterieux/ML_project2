@@ -22,12 +22,13 @@ from Post_Processing.utility import extract_blocks, reshape_higher_dim, save_com
 
 
 def submission_convolution(filename, image_list, filename_comparison, comparison=False):
-    """input : @filename : where to store the images
-    #        @image_list : list of images after CNN
-    #        @filename_comparaison : where to store the images compared
-    #
-    #
-    #output : apply convolution to and threshold to  each image of image_list to know if road or not. store the images in filename """
+    """
+    apply convolution and threshold to each image of image_list to know if road or not. store the images at filename
+
+    @filename : where to store the images
+    @image_list : list of images after CNN
+    @filename_comparaison : where to store the images compared
+    """
 
     # four types of convolutions  left up & left right ,up & down, left down & right up , left & right
     convolutions_4 = np.zeros((4, 3, 3))

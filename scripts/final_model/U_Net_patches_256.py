@@ -58,7 +58,9 @@ def extract_images(image_path):
 
 
 def extract_labels(label_path):
-    """Extract all labels from 'label_path'"""
+    """
+    Extract all labels from 'label_path'
+    """
 
     imgs = []
     for img_path in glob.glob(label_path + "/*.png"):

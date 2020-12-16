@@ -88,7 +88,9 @@ def extract_images(image_path):
 
 
 def extract_labels(label_path):
-    """Extract all labels from 'label_path'"""
+    """
+    Extract all labels from 'label_path'
+    """
 
     imgs = []
     for img_path in glob.glob(label_path + "/*.png"):
@@ -102,7 +104,9 @@ def extract_labels(label_path):
 
 
 def create_patches(data, patch_shape):
-    """separate image into patches, data is a collection of images"""
+    """
+    separate image into patches, data is a collection of images
+    """
 
     imgs = []
     for i in range(data.shape[0]):
@@ -125,10 +129,8 @@ def characterise_each_patch_as_road_or_not(labels):
     Binary classification for each patches, a patch is considered as a road if
     he has more than 50% road on it
 
-    Parameters
-    ----------
-    labels : array_like
-        array of patches
+    @labels : array_like
+    @array of patches
     """
 
     new_labels = np.zeros((labels.shape[0]))
@@ -157,9 +159,9 @@ def represent_predicted_labels(given, first_pred, second_pred):
 
 def plot_accuracies_with_respect_to_epochs(history, file_name="plot.png"):
     """
-       Creates a plot showing how the model's accuracies vary with epochs
-       history gives the model results, with the CORRECT ACCURACY MEASURING UNITS
-       The figure is saved under the specified name
+    Creates a plot showing how the model's accuracies vary with epochs
+    history gives the model results, with the CORRECT ACCURACY MEASURING UNITS
+    The figure is saved under the specified name
     """
 
     plt.plot(history.history['binary_accuracy'], 'g', label="accuracy on train set")
