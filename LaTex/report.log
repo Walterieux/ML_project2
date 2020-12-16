@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  16 DEC 2020 11:50
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.3.14)  16 DEC 2020 14:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -389,12 +389,12 @@ cy
  []
 
 [3 <./comparison_1.png (PNG copy)> <./comparison_2.png (PNG copy)>]
-<U_Net_patches_256.png, id=107, 433.62pt x 289.08pt>
+<U_Net_patches_256.png, id=108, 433.62pt x 289.08pt>
 File: U_Net_patches_256.png Graphic file (type png)
 <use U_Net_patches_256.png>
 Package pdftex.def Info: U_Net_patches_256.png  used on input line 211.
 (pdftex.def)             Requested size: 243.91125pt x 162.60709pt.
-<prediction.jpeg, id=109, 610.28pt x 610.28pt>
+<prediction.jpeg, id=110, 610.28pt x 610.28pt>
 File: prediction.jpeg Graphic file (type jpg)
 <use prediction.jpeg>
 Package pdftex.def Info: prediction.jpeg  used on input line 225.
@@ -455,7 +455,7 @@ c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/texlive
 /fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/t
 imes/utmbi8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><
 c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on report.pdf (4 pages, 365765 bytes).
+Output written on report.pdf (4 pages, 365816 bytes).
 PDF statistics:
  178 PDF objects out of 1000 (max. 8388607)
  149 compressed objects within 2 object streams

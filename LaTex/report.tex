@@ -163,7 +163,7 @@ We randomize our data before splitting. The training is run for enough epochs, s
 \section{Final Design}
 \label{sec:final}
 
-Our final design is based on a variant of a U-Net model by Peter Hönigschmid \cite{unet}. Our model takes as input an image patch of dimensions ($256$, $256$, $3$). It outputs a prediction for every pixel, i.e. the output has the shape ($256$, $256$). Every entry of the output is a single value, between $0$ and $1$. We apply a threshold on that output to characterize every pixel as road or background. Since the model contains many layers and parameters, we will not detail it here. A complete representation of the model can be seen in \texttt{model\_plot.png}, appended to the report. 
+Our final design is based on a variant of a U-Net model by Peter Hönigschmid \cite{unet}. Our model takes as input an image patch of dimensions ($256$, $256$, $3$). It outputs a prediction for every pixel, i.e. the output has the shape ($256$, $256$). Every entry of the output is a single value, between $0$ and $1$. We apply a threshold of $0.25$ on that output to characterize every pixel as road or background. Since the model contains many layers and parameters, we will not detail it here. A complete representation of the model can be seen in \texttt{model\_plot.png}, appended to the report. 
 
 We augmented the basis of Peter Hönigschmid \cite{unet} using ideas from a paper by Shaofeng Caiet et al. \cite{final}. The extracted and applied techniques consist in the following:
 

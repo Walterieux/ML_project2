@@ -27,7 +27,7 @@ from tensorflow import keras
 from tensorflow.keras import layers, models
 from tensorflow.python.keras.layers import Dropout
 
-from scripts.Post_Processing import create_submission_groundtruth
+from Post_Processing import create_submission_groundtruth
 
 """
 # Use this if GPU error during launch
