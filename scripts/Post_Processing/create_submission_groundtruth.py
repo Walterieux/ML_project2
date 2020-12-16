@@ -3,8 +3,8 @@
 ======================================================
 ======================================================
 DESCRIPTION:
-This script is useful for creating the submission csv
-file given a saved, precomputed model.
+This script is useful for creating the groundtruths 
+that can be found in the test_set_images folder.
 ======================================================
 ======================================================
 """

@@ -40,7 +40,6 @@ def separate_data():
             counter += 1
     choices_validation = choices_not_training[0:10]
     choices_test = choices_not_training[-10:]
-    # choices_test = np.delete(np.linspace(1,100,100).astype(int),choices ).astype(int)
 
     for number, feature in enumerate(list_of_features):
         directory_to_read = data_dir_training + feature
@@ -95,7 +94,7 @@ def reshape_higher_dim(patch, patch_size, image_size):
 
 def extract_blocks(a, blocksize, keep_as_view=False):
     """
-    builds an array with size a.shape/blocksise
+    builds an array with size a.shape/blocksize
 
     @a matrix like
     @blocksize : size of a block
